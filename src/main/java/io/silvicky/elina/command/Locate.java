@@ -7,21 +7,32 @@ import com.mojang.datafixers.util.Pair;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.DimensionArgumentType;
 import net.minecraft.command.argument.RegistryPredicateArgumentType;
+import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.entry.RegistryEntryList;
+import net.minecraft.registry.tag.BiomeTags;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.structure.EndCityGenerator;
+import net.minecraft.structure.SimpleStructurePiece;
+import net.minecraft.structure.StructurePiece;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.gen.structure.EndCityStructure;
 import net.minecraft.world.gen.structure.Structure;
+import net.minecraft.world.gen.structure.StructureKeys;
+import net.minecraft.world.gen.structure.StructureType;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 
 import static io.silvicky.elina.StateSaver.getServerState;
 import static net.minecraft.server.command.CommandManager.argument;
@@ -136,5 +147,29 @@ public class Locate
         Pair<BlockPos, RegistryEntry<Structure>> pair = serverWorld.getChunkManager().getChunkGenerator().locateStructure(serverWorld, registryEntryList, blockPos, 100,false);
         if (pair == null) throw STRUCTURE_NOT_FOUND_EXCEPTION.create(predicate.asString());
         return sendCoordinates(source, predicate, blockPos, pair, "commands.locate.structure.success", false, Duration.ZERO);
+    }
+    public static boolean hasShip(ServerWorld world, ChunkPos pos)
+    {
+        Structure.Context context=new Structure.Context
+                (
+                        world.getRegistryManager(),
+                        world.getChunkManager().getChunkGenerator(),
+                        world.getChunkManager().getChunkGenerator().getBiomeSource(),
+                        world.getChunkManager().getNoiseConfig(),
+                        world.getStructureTemplateManager(),
+                        world.getSeed(),
+                        pos,
+                        world,
+                        world.getRegistryManager().getOrThrow(RegistryKeys.STRUCTURE).getOrThrow(StructureKeys.END_CITY).value().getValidBiomes()::contains
+                );
+
+        Optional<Structure.StructurePosition> position=new EndCityStructure(new Structure.Config(world.getRegistryManager().getOrThrow(RegistryKeys.STRUCTURE).getOrThrow(StructureKeys.END_CITY).value().getValidBiomes())).getStructurePosition(context);
+        if(position.isEmpty())return false;
+        List<StructurePiece> list=position.get().generate().toList().pieces();
+        for(StructurePiece piece:list)
+        {
+            if(piece instanceof SimpleStructurePiece piece1&&piece1.templateIdString.equals("ship"))return true;
+        }
+        return false;
     }
 }
