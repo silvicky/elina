@@ -1,0 +1,5 @@
+accessWidener v2 named
+accessible field net/minecraft/server/command/LocateCommand STRUCTURE_NOT_FOUND_EXCEPTION Lcom/mojang/brigadier/exceptions/DynamicCommandExceptionType;
+accessible field net/minecraft/server/command/LocateCommand STRUCTURE_INVALID_EXCEPTION Lcom/mojang/brigadier/exceptions/DynamicCommandExceptionType;
+accessible method net/minecraft/server/command/LocateCommand getStructureListForPredicate (Lnet/minecraft/command/argument/RegistryPredicateArgumentType$RegistryPredicate;Lnet/minecraft/registry/Registry;)Ljava/util/Optional;
+accessible method net/minecraft/world/gen/chunk/ChunkGenerator locateStructure (Ljava/util/Set;Lnet/minecraft/world/WorldView;Lnet/minecraft/world/gen/StructureAccessor;ZLnet/minecraft/world/gen/chunk/placement/StructurePlacement;Lnet/minecraft/util/math/ChunkPos;)Lcom/mojang/datafixers/util/Pair;
