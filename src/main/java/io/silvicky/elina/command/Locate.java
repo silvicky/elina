@@ -7,16 +7,13 @@ import com.mojang.datafixers.util.Pair;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.DimensionArgumentType;
 import net.minecraft.command.argument.RegistryPredicateArgumentType;
-import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.entry.RegistryEntryList;
-import net.minecraft.registry.tag.BiomeTags;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.structure.EndCityGenerator;
 import net.minecraft.structure.SimpleStructurePiece;
 import net.minecraft.structure.StructurePiece;
 import net.minecraft.text.Text;
@@ -26,7 +23,6 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.gen.structure.EndCityStructure;
 import net.minecraft.world.gen.structure.Structure;
 import net.minecraft.world.gen.structure.StructureKeys;
-import net.minecraft.world.gen.structure.StructureType;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -66,7 +62,7 @@ public class Locate
                     .then(argument(STRUCTURE,RegistryPredicateArgumentType.registryPredicate(RegistryKeys.STRUCTURE))
                             .then(argument(DIMENSION,new DimensionArgumentType())
                                     .executes(ctx->list(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),RegistryPredicateArgumentType.getPredicate(ctx, STRUCTURE, RegistryKeys.STRUCTURE, STRUCTURE_INVALID_EXCEPTION))))));
-    public static int mark(ServerCommandSource source, ServerWorld serverWorld, BlockPos blockPos, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate) throws CommandSyntaxException
+    private static int mark(ServerCommandSource source, ServerWorld serverWorld, BlockPos blockPos, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate) throws CommandSyntaxException
     {
         blockPos=blockPos.withY(0);
         Pair<BlockPos, RegistryEntry<Structure>> pair = serverWorld.getChunkManager().getChunkGenerator().locateStructure(serverWorld, getRegistryEntryList(source,predicate), blockPos, 100,false);
@@ -82,7 +78,7 @@ public class Locate
         source.sendFeedback(()-> Text.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
-    public static int remove(ServerCommandSource source, ServerWorld serverWorld, BlockPos blockPos, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate) throws CommandSyntaxException
+    private static int remove(ServerCommandSource source, ServerWorld serverWorld, BlockPos blockPos, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate) throws CommandSyntaxException
     {
         blockPos=blockPos.withY(0);
         HashSet<BlockPos> set=getBlockPosSet(predicate.getKey().left().orElseThrow(),serverWorld);
@@ -111,7 +107,7 @@ public class Locate
         source.sendFeedback(()-> Text.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
-    public static int list(ServerCommandSource source, ServerWorld serverWorld, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate) throws CommandSyntaxException
+    private static int list(ServerCommandSource source, ServerWorld serverWorld, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate) throws CommandSyntaxException
     {
         HashSet<BlockPos> set=getBlockPosSet(predicate.getKey().left().orElseThrow(),serverWorld);
         for(BlockPos blockPos:set)
@@ -137,11 +133,11 @@ public class Locate
         if(!map2.containsKey(dimensionId))map2.put(dimensionId,new HashSet<>());
         return map2.get(dimensionId);
     }
-    public static int find(ServerCommandSource source, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate) throws CommandSyntaxException
+    private static int find(ServerCommandSource source, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate) throws CommandSyntaxException
     {
         return find(source,source.getWorld(),BlockPos.ofFloored(source.getPosition()),predicate);
     }
-    public static int find(ServerCommandSource source, ServerWorld serverWorld, BlockPos blockPos, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate) throws CommandSyntaxException
+    private static int find(ServerCommandSource source, ServerWorld serverWorld, BlockPos blockPos, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate) throws CommandSyntaxException
     {
         RegistryEntryList<Structure> registryEntryList = getRegistryEntryList(source,predicate);
         Pair<BlockPos, RegistryEntry<Structure>> pair = serverWorld.getChunkManager().getChunkGenerator().locateStructure(serverWorld, registryEntryList, blockPos, 100,false);

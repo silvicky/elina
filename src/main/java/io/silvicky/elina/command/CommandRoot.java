@@ -8,6 +8,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 
 import static io.silvicky.elina.command.Locate.locateArgumentBuilder;
+import static io.silvicky.elina.command.Map.mapArgumentBuilder;
 import static net.minecraft.server.command.CommandManager.literal;
 
 public class CommandRoot
@@ -18,7 +19,8 @@ public class CommandRoot
                 literal("elina")
                         .requires(source -> source.getPermissions().hasPermission(new Permission.Level(PermissionLevel.ALL)))
                         .executes(context->help(context.getSource()))
-                        .then(locateArgumentBuilder));
+                        .then(locateArgumentBuilder)
+                        .then(mapArgumentBuilder));
     }
     private static int help(ServerCommandSource source)
     {

@@ -1,8 +1,10 @@
 package io.silvicky.elina;
 
 import io.silvicky.elina.command.CommandRoot;
+import io.silvicky.elina.webmap.api.BlueMap;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +13,7 @@ public class Elina implements ModInitializer {
 	// It is considered best practice to use your mod id as the logger's name.
 	// That way, it's clear which mod wrote info, warnings, and errors.
 	public static final String MOD_ID = "Elina";
+	public static MinecraftServer server=null;
     public static final Logger LOGGER = LoggerFactory.getLogger("elina");
 	@Override
 	public void onInitialize() {
@@ -19,5 +22,6 @@ public class Elina implements ModInitializer {
 		// Proceed with mild caution.
 		LOGGER.info("Loading Elina...");
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> CommandRoot.register(dispatcher));
+		BlueMap.register();
 	}
 }

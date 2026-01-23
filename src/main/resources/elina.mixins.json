@@ -3,7 +3,8 @@
   "package": "io.silvicky.elina.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "ChunkGeneratorMixin"
+    "ChunkGeneratorMixin",
+    "ServerWorldMixin"
   ],
   "injectors": {
     "defaultRequire": 1
