@@ -1,9 +1,16 @@
 package io.silvicky.elina.webmap.subway;
 
-import java.util.HashSet;
-import java.util.Set;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.util.math.BlockPos;
 
-public class SubwayStation
+public record SubwayStation(BlockPos pos, String label, String detail)
 {
-    public final Set<String> lines=new HashSet<>();
+    public static Codec<SubwayStation> CODEC= RecordCodecBuilder.create((instance)->
+            instance.group
+                    (
+                            BlockPos.CODEC.fieldOf("pos").forGetter(point -> point.pos),
+                            Codec.STRING.fieldOf("label").forGetter(point -> point.label),
+                            Codec.STRING.fieldOf("detail").forGetter(point -> point.detail)
+                    ).apply(instance,SubwayStation::new));
 }

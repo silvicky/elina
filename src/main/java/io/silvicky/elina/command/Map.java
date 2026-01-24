@@ -30,7 +30,6 @@ public class Map
     public static final String ICON = "icon";
     public static final String ID = "id";
     public static final String SET = "set";
-    public static final String MAP="map";
     public static LiteralArgumentBuilder<ServerCommandSource> mapArgumentBuilder
             = literal("map")
             .then(literal("mark")
