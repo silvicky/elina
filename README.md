@@ -6,6 +6,8 @@ A collection of some Minecraft utilities, with minimal change to vanilla gamepla
 
 Still, this is designed mainly for [my server, MCUCST](https://x.com/mcucst), and suggestions are welcomed.
 
+**WARNING**: This mod is still incomplete and no future compatibility is guaranteed!
+
 ## Components
 
 ### *locate*
@@ -14,11 +16,15 @@ A modification of vanilla *locate structure* command, allowing you to specify ce
 
 ### *map*
 
-A wrapper of BlueMap API, and in the future many functions like subway system would be added.
+A wrapper of BlueMap API, and in the future many functions would be added.
 
 Without BlueMap it simply does nothing, but stored data is preserved.
 
 In the future more WebMap variants might be added.
+
+### *subway*
+
+This is the subway system of the *map* part, and you can draw custom lines and stations.
 
 ## About the name
 
