@@ -14,6 +14,7 @@ import io.silvicky.elina.webmap.subway.SubwayStation;
 import io.silvicky.elina.webmap.subway.SubwaySystem;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.DimensionArgumentType;
+import net.minecraft.command.argument.HexColorArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
@@ -43,8 +44,8 @@ public class Subway
             = literal("subway")
             .then(literal("icon")
                     .then(argument(DIMENSION, DimensionArgumentType.dimension())
-                            .then(argument(ICON, StringArgumentType.string())
-                                    .executes(ctx->setSystemIcon(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ICON))))))
+                            .then(argument(ICON, IntegerArgumentType.integer())
+                                    .executes(ctx->setSystemIcon(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),IntegerArgumentType.getInteger(ctx,ICON))))))
             .then(literal("station")
                     .then(literal("add")
                             .then(argument(DIMENSION,new DimensionArgumentType())
@@ -65,14 +66,17 @@ public class Subway
                             .then(argument(DIMENSION, DimensionArgumentType.dimension())
                                     .then(argument(ID,StringArgumentType.string())
                                             .then(argument(LABEL,StringArgumentType.string())
-                                                    .then(argument(ICON,StringArgumentType.string())
-                                                            .then(argument(COLOR, IntegerArgumentType.integer())
+                                                    .then(argument(ICON,IntegerArgumentType.integer())
+                                                            .then(argument(COLOR, HexColorArgumentType.hexColor())
                                                                     .then(argument(RING, BoolArgumentType.bool())
-                                                                            .executes(ctx->addLine(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),StringArgumentType.getString(ctx,LABEL),StringArgumentType.getString(ctx,ICON),IntegerArgumentType.getInteger(ctx,COLOR),BoolArgumentType.getBool(ctx,RING))))))))))
+                                                                            .executes(ctx->addLine(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),StringArgumentType.getString(ctx,LABEL),IntegerArgumentType.getInteger(ctx,ICON),HexColorArgumentType.getArgbColor(ctx,COLOR),BoolArgumentType.getBool(ctx,RING))))))))))
                     .then(literal("del")
                             .then(argument(DIMENSION, DimensionArgumentType.dimension())
                                     .then(argument(ID,StringArgumentType.string())
                                             .executes(ctx->deleteLine(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID))))))
+                    .then(literal("list")
+                            .then(argument(DIMENSION, DimensionArgumentType.dimension())
+                                    .executes(ctx->listLine(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION)))))
                     .then(literal("addstation")
                             .then(argument(DIMENSION, DimensionArgumentType.dimension())
                                     .then(argument(ID,StringArgumentType.string())
@@ -84,7 +88,7 @@ public class Subway
                                     .then(argument(ID,StringArgumentType.string())
                                             .then(argument(NEW,StringArgumentType.string())
                                                     .executes(ctx->deleteStationFromLine(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),StringArgumentType.getString(ctx,NEW)))))))
-                    .then(literal("list")
+                    .then(literal("liststation")
                             .then(argument(DIMENSION, DimensionArgumentType.dimension())
                                     .then(argument(ID,StringArgumentType.string())
                                             .executes(ctx->listStationFromLine(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID)))))));
@@ -100,7 +104,7 @@ public class Subway
         if(!lines.containsKey(id))lines.put(id,new SubwayLine());
         return lines.get(id);
     }
-    private static int setSystemIcon(ServerCommandSource source, ServerWorld serverWorld, String icon)
+    private static int setSystemIcon(ServerCommandSource source, ServerWorld serverWorld, int icon)
     {
         SubwaySystem subwaySystem=getSubway(serverWorld);
         subwaySystem.icon=icon;
@@ -108,7 +112,7 @@ public class Subway
         BlueMap.refresh();
         return Command.SINGLE_SUCCESS;
     }
-    private static int addLine(ServerCommandSource source, ServerWorld serverWorld, String id, String label, String icon, int color,boolean ring)
+    private static int addLine(ServerCommandSource source, ServerWorld serverWorld, String id, String label, int icon, int color,boolean ring)
     {
         SubwayLine line=getSubwayLine(serverWorld,id);
         line.label=label;
@@ -124,6 +128,15 @@ public class Subway
         getSubway(serverWorld).lines.remove(id);
         source.sendFeedback(()-> Text.literal("Done."),false);
         BlueMap.refresh();
+        return Command.SINGLE_SUCCESS;
+    }
+    private static int listLine(ServerCommandSource source, ServerWorld serverWorld)
+    {
+        for(java.util.Map.Entry<String,SubwayLine> line:getSubway(serverWorld).lines.entrySet())
+        {
+            source.sendFeedback(()-> Text.literal(format("%s: %s",line.getKey(),line.getValue())),false);
+        }
+        source.sendFeedback(()-> Text.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
     private static int addStation(ServerCommandSource source, ServerWorld serverWorld, String id, BlockPos pos, String label, String detail)
@@ -155,7 +168,7 @@ public class Subway
     {
         SubwayLine line = getSubway(serverWorld).lines.get(id);
         if(line==null)throw LINE_NOT_FOUND.create();
-        if(!getSubway(serverWorld).stationDetails.containsKey(id))throw STATION_NOT_FOUND.create();
+        if(!getSubway(serverWorld).stationDetails.containsKey(newStation))throw STATION_NOT_FOUND.create();
         line.insert(newStation, prev);
         source.sendFeedback(()-> Text.literal("Done."),false);
         BlueMap.refresh();

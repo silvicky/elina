@@ -1,6 +1,7 @@
 package io.silvicky.elina.command;
 
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import io.silvicky.elina.webmap.WebMapStorage;
@@ -37,10 +38,10 @@ public class Map
                             .then(argument(ID,StringArgumentType.string())
                                     .then(argument(SET,StringArgumentType.string())
                                             .then(argument(POS,new BlockPosArgumentType())
-                                                    .then(argument(ICON,StringArgumentType.string())
+                                                    .then(argument(ICON, IntegerArgumentType.integer())
                                                             .then(argument(LABEL,StringArgumentType.string())
                                                                     .then(argument(DETAIL,StringArgumentType.greedyString())
-                                                                            .executes(ctx->mark(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),StringArgumentType.getString(ctx,SET),BlockPosArgumentType.getBlockPos(ctx,POS),StringArgumentType.getString(ctx, ICON),StringArgumentType.getString(ctx,LABEL),StringArgumentType.getString(ctx,DETAIL)))))))))))
+                                                                            .executes(ctx->mark(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),StringArgumentType.getString(ctx,SET),BlockPosArgumentType.getBlockPos(ctx,POS),IntegerArgumentType.getInteger(ctx, ICON),StringArgumentType.getString(ctx,LABEL),StringArgumentType.getString(ctx,DETAIL)))))))))))
             .then(literal("remove")
                     .then(argument(DIMENSION,new DimensionArgumentType())
                             .then(argument(ID,StringArgumentType.string())
@@ -73,7 +74,7 @@ public class Map
         if(!set0.containsKey(world.getRegistryKey().getValue()))set0.put(world.getRegistryKey().getValue(),new WebMapStorage());
         return set0.get(world.getRegistryKey().getValue()).sets();
     }
-    private static int mark(ServerCommandSource source, ServerWorld world, String id, String set,BlockPos pos, String icon, String label, String detail)
+    private static int mark(ServerCommandSource source, ServerWorld world, String id, String set,BlockPos pos, int icon, String label, String detail)
     {
         HashMap<String, Point> set2=getPointMap(world, set);
         set2.put(id,new Point(pos,label,detail,icon));

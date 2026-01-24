@@ -9,8 +9,8 @@ public class SubwaySystem
 {
     public final HashMap<String,SubwayLine> lines;
     public final HashMap<String,SubwayStation> stationDetails;
-    public String icon;
-    public SubwaySystem(HashMap<String,SubwayLine> lines,HashMap<String,SubwayStation> stationDetails,String icon)
+    public int icon;
+    public SubwaySystem(HashMap<String,SubwayLine> lines,HashMap<String,SubwayStation> stationDetails,int icon)
     {
         this.lines=lines;
         this.stationDetails=stationDetails;
@@ -18,13 +18,13 @@ public class SubwaySystem
     }
     public SubwaySystem()
     {
-        this(new HashMap<>(),new HashMap<>(),"");
+        this(new HashMap<>(),new HashMap<>(),-1);
     }
     public static Codec<SubwaySystem> CODEC= RecordCodecBuilder.create((instance)->
             instance.group
                     (
                             Codec.unboundedMap(Codec.STRING,SubwayLine.CODEC).xmap(HashMap::new,map->map).fieldOf("lines").forGetter(point -> point.lines),
                             Codec.unboundedMap(Codec.STRING,SubwayStation.CODEC).xmap(HashMap::new,map->map).fieldOf("stations").forGetter(point -> point.stationDetails),
-                            Codec.STRING.fieldOf("icon").forGetter(point -> point.icon)
+                            Codec.INT.fieldOf("icon").forGetter(point -> point.icon)
                     ).apply(instance, SubwaySystem::new));
 }
