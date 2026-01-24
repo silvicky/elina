@@ -52,7 +52,7 @@ public class Subway
                                     .then(argument(ID,StringArgumentType.string())
                                             .then(argument(POS,new BlockPosArgumentType())
                                                     .then(argument(LABEL,StringArgumentType.string())
-                                                            .then(argument(DETAIL,StringArgumentType.greedyString())
+                                                            .then(argument(DETAIL,StringArgumentType.string())
                                                                     .executes(ctx->addStation(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),BlockPosArgumentType.getBlockPos(ctx,POS),StringArgumentType.getString(ctx,LABEL),StringArgumentType.getString(ctx,DETAIL)))))))))
                     .then(literal("del")
                             .then(argument(DIMENSION,new DimensionArgumentType())

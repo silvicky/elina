@@ -40,7 +40,7 @@ public class Map
                                             .then(argument(POS,new BlockPosArgumentType())
                                                     .then(argument(ICON, IntegerArgumentType.integer())
                                                             .then(argument(LABEL,StringArgumentType.string())
-                                                                    .then(argument(DETAIL,StringArgumentType.greedyString())
+                                                                    .then(argument(DETAIL,StringArgumentType.string())
                                                                             .executes(ctx->mark(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),StringArgumentType.getString(ctx,SET),BlockPosArgumentType.getBlockPos(ctx,POS),IntegerArgumentType.getInteger(ctx, ICON),StringArgumentType.getString(ctx,LABEL),StringArgumentType.getString(ctx,DETAIL)))))))))))
             .then(literal("remove")
                     .then(argument(DIMENSION,new DimensionArgumentType())

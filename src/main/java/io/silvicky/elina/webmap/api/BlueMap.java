@@ -90,6 +90,7 @@ public class BlueMap
         {
             int lineCount=usage.getOrDefault(entry.getKey(),new ArrayList<>()).size();
             int iconId;
+            StringBuilder detail=new StringBuilder(entry.getValue().detail());
             if(lineCount==0)
             {
                 iconId=-1;
@@ -97,16 +98,26 @@ public class BlueMap
             else if(lineCount==1)
             {
                 iconId=subwaySystem.lines.get(usage.get(entry.getKey()).getFirst()).icon;
+                detail.append('\n');
+                detail.append(subwaySystem.lines.get(usage.get(entry.getKey()).getFirst()).label);
             }
             else
             {
                 iconId=subwaySystem.icon;
+                detail.append('\n');
+                Iterator<String> iterator=usage.get(entry.getKey()).iterator();
+                detail.append(subwaySystem.lines.get(iterator.next()).label);
+                while(iterator.hasNext())
+                {
+                    detail.append(", ");
+                    detail.append(subwaySystem.lines.get(iterator.next()).label);
+                }
             }
             String icon=getImagePath(api,iconId);
             POIMarker marker=POIMarker.builder()
                     .position(fromBlockPos(entry.getValue().pos()))
                     .label(entry.getValue().label())
-                    .detail(entry.getValue().detail())
+                    .detail(detail.toString())
                     .icon(icon, MapRender.width/2,MapRender.width/2)
                     .build();
             markerSet.put(entry.getKey(), marker);
