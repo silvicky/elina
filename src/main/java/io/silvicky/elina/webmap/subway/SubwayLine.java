@@ -17,7 +17,7 @@ public class SubwayLine
     @Override
     public String toString()
     {
-        StringBuilder stringBuilder=new StringBuilder(format("%s, icon=%d, color=%s",label,icon,Integer.toString(color,16).toUpperCase()));
+        StringBuilder stringBuilder=new StringBuilder(format("%s, icon=%d, color=%06X",label,icon,color&0xFFFFFF));
         if(ring)stringBuilder.append(", ring");
         return stringBuilder.toString();
     }
