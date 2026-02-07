@@ -73,6 +73,7 @@ public class BlueMap
                 .label("")
                 .lineColor(new Color(color))
                 .line(new Line(fromBlockPos(a),fromBlockPos(b)))
+                .depthTestEnabled(false)
                 .build();
     }
     private static void renderSubway(BlueMapAPI api,MarkerSet markerSet, SubwaySystem subwaySystem)
