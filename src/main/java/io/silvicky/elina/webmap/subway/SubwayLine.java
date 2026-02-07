@@ -5,6 +5,8 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import java.util.LinkedList;
 
+import static java.lang.String.format;
+
 public class SubwayLine
 {
     public String label;
@@ -12,6 +14,13 @@ public class SubwayLine
     public int color;
     public boolean ring;
     public final LinkedList<String> stations;
+    @Override
+    public String toString()
+    {
+        StringBuilder stringBuilder=new StringBuilder(format("%s, icon=%d, color=%s",label,icon,Integer.toString(color,16).toUpperCase()));
+        if(ring)stringBuilder.append(", ring");
+        return stringBuilder.toString();
+    }
 
     public static Codec<SubwayLine> CODEC= RecordCodecBuilder.create((instance)->
             instance.group
