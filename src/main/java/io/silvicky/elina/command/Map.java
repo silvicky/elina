@@ -5,7 +5,6 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import io.silvicky.elina.webmap.WebMapStorage;
-import io.silvicky.elina.webmap.api.BlueMap;
 import io.silvicky.elina.webmap.entities.Point;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.DimensionArgumentType;
@@ -23,6 +22,7 @@ import static io.silvicky.elina.command.Locate.POS;
 import static java.lang.String.format;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
+import static io.silvicky.elina.webmap.api.APIEntry.refresh;
 
 public class Map
 {
@@ -79,7 +79,7 @@ public class Map
         HashMap<String, Point> set2=getPointMap(world, set);
         set2.put(id,new Point(pos,label,detail,icon));
         source.sendFeedback(()-> Text.literal("Done."),false);
-        BlueMap.refresh();
+        refresh();
         return Command.SINGLE_SUCCESS;
     }
     private static int remove(ServerCommandSource source, ServerWorld world, String id, String set)
@@ -87,7 +87,7 @@ public class Map
         HashMap<String, Point> set2=getPointMap(world, set);
         set2.remove(id);
         source.sendFeedback(()-> Text.literal("Done."),false);
-        BlueMap.refresh();
+        refresh();
         return Command.SINGLE_SUCCESS;
     }
     private static int list(ServerCommandSource source, ServerWorld world, String set)
@@ -105,7 +105,7 @@ public class Map
         HashMap<String,String> set1=getSetMap(world);
         set1.put(set,label);
         source.sendFeedback(()-> Text.literal("Done."),false);
-        BlueMap.refresh();
+        refresh();
         return Command.SINGLE_SUCCESS;
     }
     private static int deleteSet(ServerCommandSource source, ServerWorld world, String set)
@@ -113,7 +113,7 @@ public class Map
         HashMap<String,String> set1=getSetMap(world);
         set1.remove(set);
         source.sendFeedback(()-> Text.literal("Done."),false);
-        BlueMap.refresh();
+        refresh();
         return Command.SINGLE_SUCCESS;
     }
 }

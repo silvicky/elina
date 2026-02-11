@@ -1,7 +1,7 @@
 package io.silvicky.elina;
 
 import io.silvicky.elina.command.CommandRoot;
-import io.silvicky.elina.webmap.api.BlueMap;
+import io.silvicky.elina.webmap.api.APIEntry;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.server.MinecraftServer;
@@ -22,6 +22,6 @@ public class Elina implements ModInitializer {
 		// Proceed with mild caution.
 		LOGGER.info("Loading Elina...");
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> CommandRoot.register(dispatcher));
-		BlueMap.register();
+		APIEntry.register();
 	}
 }

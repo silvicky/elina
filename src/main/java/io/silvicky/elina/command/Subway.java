@@ -8,7 +8,6 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import io.silvicky.elina.webmap.WebMapStorage;
-import io.silvicky.elina.webmap.api.BlueMap;
 import io.silvicky.elina.webmap.subway.SubwayLine;
 import io.silvicky.elina.webmap.subway.SubwayStation;
 import io.silvicky.elina.webmap.subway.SubwaySystem;
@@ -27,6 +26,7 @@ import static io.silvicky.elina.StateSaver.getServerState;
 import static io.silvicky.elina.command.Locate.DIMENSION;
 import static io.silvicky.elina.command.Locate.POS;
 import static io.silvicky.elina.command.Map.*;
+import static io.silvicky.elina.webmap.api.APIEntry.refresh;
 import static java.lang.String.format;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -109,7 +109,7 @@ public class Subway
         SubwaySystem subwaySystem=getSubway(serverWorld);
         subwaySystem.icon=icon;
         source.sendFeedback(()-> Text.literal("Done."),false);
-        BlueMap.refresh();
+        refresh();
         return Command.SINGLE_SUCCESS;
     }
     private static int addLine(ServerCommandSource source, ServerWorld serverWorld, String id, String label, int icon, int color,boolean ring)
@@ -120,14 +120,14 @@ public class Subway
         line.color=color;
         line.ring=ring;
         source.sendFeedback(()-> Text.literal("Done."),false);
-        BlueMap.refresh();
+        refresh();
         return Command.SINGLE_SUCCESS;
     }
     private static int deleteLine(ServerCommandSource source, ServerWorld serverWorld, String id)
     {
         getSubway(serverWorld).lines.remove(id);
         source.sendFeedback(()-> Text.literal("Done."),false);
-        BlueMap.refresh();
+        refresh();
         return Command.SINGLE_SUCCESS;
     }
     private static int listLine(ServerCommandSource source, ServerWorld serverWorld)
@@ -143,7 +143,7 @@ public class Subway
     {
         getSubway(serverWorld).stationDetails.put(id,new SubwayStation(pos,label,detail));
         source.sendFeedback(()-> Text.literal("Done."),false);
-        BlueMap.refresh();
+        refresh();
         return Command.SINGLE_SUCCESS;
     }
     private static int deleteStation(ServerCommandSource source, ServerWorld serverWorld, String id)
@@ -151,7 +151,7 @@ public class Subway
         getSubway(serverWorld).stationDetails.remove(id);
         for(SubwayLine line:getSubway(serverWorld).lines.values())line.remove(id);
         source.sendFeedback(()-> Text.literal("Done."),false);
-        BlueMap.refresh();
+        refresh();
         return Command.SINGLE_SUCCESS;
     }
     private static int listStation(ServerCommandSource source, ServerWorld serverWorld)
@@ -161,7 +161,7 @@ public class Subway
             source.sendFeedback(()-> Text.literal(format("%s: %s",station.getKey(),station.getValue())),false);
         }
         source.sendFeedback(()-> Text.literal("Done."),false);
-        BlueMap.refresh();
+        refresh();
         return Command.SINGLE_SUCCESS;
     }
     private static int addStationToLine(ServerCommandSource source, ServerWorld serverWorld, String id, String newStation, String prev) throws CommandSyntaxException
@@ -171,7 +171,7 @@ public class Subway
         if(!getSubway(serverWorld).stationDetails.containsKey(newStation))throw STATION_NOT_FOUND.create();
         line.insert(newStation, prev);
         source.sendFeedback(()-> Text.literal("Done."),false);
-        BlueMap.refresh();
+        refresh();
         return Command.SINGLE_SUCCESS;
     }
     private static int deleteStationFromLine(ServerCommandSource source, ServerWorld serverWorld, String id, String newStation) throws CommandSyntaxException
@@ -180,7 +180,7 @@ public class Subway
         if(line==null)throw LINE_NOT_FOUND.create();
         line.remove(newStation);
         source.sendFeedback(()-> Text.literal("Done."),false);
-        BlueMap.refresh();
+        refresh();
         return Command.SINGLE_SUCCESS;
     }
     private static int listStationFromLine(ServerCommandSource source, ServerWorld serverWorld, String id) throws CommandSyntaxException
@@ -192,7 +192,7 @@ public class Subway
             source.sendFeedback(()-> Text.literal(format("%s: %s",station,getSubway(serverWorld).stationDetails.get(station))),false);
         }
         source.sendFeedback(()-> Text.literal("Done."),false);
-        BlueMap.refresh();
+        refresh();
         return Command.SINGLE_SUCCESS;
     }
 }

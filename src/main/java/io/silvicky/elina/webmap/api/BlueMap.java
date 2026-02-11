@@ -29,9 +29,9 @@ import static io.silvicky.elina.Elina.server;
 import static io.silvicky.elina.StateSaver.getServerState;
 import static java.lang.String.format;
 
-public class BlueMap
+class BlueMap
 {
-    public static void register()
+    static void register()
     {
         BlueMapAPI.onEnable(api-> refresh());
     }
@@ -63,7 +63,7 @@ public class BlueMap
         }
         return ret;
     }
-    public static Vector3d fromBlockPos(BlockPos pos)
+    private static Vector3d fromBlockPos(BlockPos pos)
     {
         return Vector3d.from(pos.getX(), pos.getY(), pos.getZ());
     }
@@ -140,7 +140,7 @@ public class BlueMap
             if(line.ring)markerSet.put(format(segmentFormat,segmentCount++),fromBlockPoss(subwaySystem.stationDetails.get(last).pos(),subwaySystem.stationDetails.get(first).pos(), line.color));
         }
     }
-    public static void refresh()
+    static void refresh()
     {
         Optional<BlueMapAPI> apiOpt= BlueMapAPI.getInstance();
         if(apiOpt.isEmpty())return;
