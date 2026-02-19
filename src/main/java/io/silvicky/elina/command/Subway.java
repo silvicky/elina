@@ -17,10 +17,7 @@ import net.minecraft.command.argument.HexColorArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-
-import java.util.HashMap;
 
 import static io.silvicky.elina.StateSaver.getServerState;
 import static io.silvicky.elina.command.Locate.DIMENSION;
@@ -94,15 +91,13 @@ public class Subway
                                             .executes(ctx->listStationFromLine(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID)))))));
     public static SubwaySystem getSubway(ServerWorld world)
     {
-        HashMap<Identifier, WebMapStorage> set0=getServerState(world.getServer()).webMapStorage;
-        if(!set0.containsKey(world.getRegistryKey().getValue()))set0.put(world.getRegistryKey().getValue(),new WebMapStorage());
-        return set0.get(world.getRegistryKey().getValue()).subwaySystem();
+        return getServerState(world.getServer()).webMapStorage
+                .computeIfAbsent(world.getRegistryKey().getValue(),i->new WebMapStorage())
+                .subwaySystem();
     }
     public static SubwayLine getSubwayLine(ServerWorld world, String id)
     {
-        HashMap<String, SubwayLine> lines=getSubway(world).lines;
-        if(!lines.containsKey(id))lines.put(id,new SubwayLine());
-        return lines.get(id);
+        return getSubway(world).lines.computeIfAbsent(id,i->new SubwayLine());
     }
     private static int setSystemIcon(ServerCommandSource source, ServerWorld serverWorld, int icon)
     {

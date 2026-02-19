@@ -11,7 +11,6 @@ import net.minecraft.command.argument.DimensionArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.HashMap;
@@ -19,10 +18,10 @@ import java.util.HashMap;
 import static io.silvicky.elina.StateSaver.getServerState;
 import static io.silvicky.elina.command.Locate.DIMENSION;
 import static io.silvicky.elina.command.Locate.POS;
+import static io.silvicky.elina.webmap.api.APIEntry.refresh;
 import static java.lang.String.format;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
-import static io.silvicky.elina.webmap.api.APIEntry.refresh;
 
 public class Map
 {
@@ -62,38 +61,34 @@ public class Map
                                     .executes(ctx->deleteSet(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,SET))))));
     public static HashMap<String, Point> getPointMap(ServerWorld world, String set)
     {
-        HashMap<Identifier,WebMapStorage> set0=getServerState(world.getServer()).webMapStorage;
-        if(!set0.containsKey(world.getRegistryKey().getValue()))set0.put(world.getRegistryKey().getValue(),new WebMapStorage());
-        HashMap<String, HashMap<String, Point>> set1=set0.get(world.getRegistryKey().getValue()).points();
-        if(!set1.containsKey(set))set1.put(set,new HashMap<>());
-        return set1.get(set);
+        return getServerState(world.getServer()).webMapStorage
+                .computeIfAbsent(world.getRegistryKey().getValue(),i->new WebMapStorage())
+                .points()
+                .computeIfAbsent(set,i->new HashMap<>());
     }
     public static HashMap<String, String> getSetMap(ServerWorld world)
     {
-        HashMap<Identifier,WebMapStorage> set0=getServerState(world.getServer()).webMapStorage;
-        if(!set0.containsKey(world.getRegistryKey().getValue()))set0.put(world.getRegistryKey().getValue(),new WebMapStorage());
-        return set0.get(world.getRegistryKey().getValue()).sets();
+        return getServerState(world.getServer()).webMapStorage
+                .computeIfAbsent(world.getRegistryKey().getValue(),i->new WebMapStorage())
+                .sets();
     }
     private static int mark(ServerCommandSource source, ServerWorld world, String id, String set,BlockPos pos, int icon, String label, String detail)
     {
-        HashMap<String, Point> set2=getPointMap(world, set);
-        set2.put(id,new Point(pos,label,detail,icon));
+        getPointMap(world, set).put(id,new Point(pos,label,detail,icon));
         source.sendFeedback(()-> Text.literal("Done."),false);
         refresh();
         return Command.SINGLE_SUCCESS;
     }
     private static int remove(ServerCommandSource source, ServerWorld world, String id, String set)
     {
-        HashMap<String, Point> set2=getPointMap(world, set);
-        set2.remove(id);
+        getPointMap(world, set).remove(id);
         source.sendFeedback(()-> Text.literal("Done."),false);
         refresh();
         return Command.SINGLE_SUCCESS;
     }
     private static int list(ServerCommandSource source, ServerWorld world, String set)
     {
-        HashMap<String, Point> set2=getPointMap(world, set);
-        for(java.util.Map.Entry<String,Point> entry: set2.entrySet())
+        for(java.util.Map.Entry<String,Point> entry: getPointMap(world, set).entrySet())
         {
             source.sendFeedback(()-> Text.literal(format("%s: %s",entry.getKey(),entry.getValue())),false);
         }
@@ -102,16 +97,14 @@ public class Map
     }
     private static int addSet(ServerCommandSource source, ServerWorld world, String set, String label)
     {
-        HashMap<String,String> set1=getSetMap(world);
-        set1.put(set,label);
+        getSetMap(world).put(set,label);
         source.sendFeedback(()-> Text.literal("Done."),false);
         refresh();
         return Command.SINGLE_SUCCESS;
     }
     private static int deleteSet(ServerCommandSource source, ServerWorld world, String set)
     {
-        HashMap<String,String> set1=getSetMap(world);
-        set1.remove(set);
+        getSetMap(world).remove(set);
         source.sendFeedback(()-> Text.literal("Done."),false);
         refresh();
         return Command.SINGLE_SUCCESS;

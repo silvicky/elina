@@ -78,7 +78,7 @@ public class Locate
         source.sendFeedback(()-> Text.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
-    private static int remove(ServerCommandSource source, ServerWorld serverWorld, BlockPos blockPos, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate) throws CommandSyntaxException
+    private static int remove(ServerCommandSource source, ServerWorld serverWorld, BlockPos blockPos, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate)
     {
         blockPos=blockPos.withY(0);
         HashSet<BlockPos> set=getBlockPosSet(predicate.getKey().left().orElseThrow(),serverWorld);
@@ -107,7 +107,7 @@ public class Locate
         source.sendFeedback(()-> Text.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
-    private static int list(ServerCommandSource source, ServerWorld serverWorld, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate) throws CommandSyntaxException
+    private static int list(ServerCommandSource source, ServerWorld serverWorld, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate)
     {
         HashSet<BlockPos> set=getBlockPosSet(predicate.getKey().left().orElseThrow(),serverWorld);
         for(BlockPos blockPos:set)
@@ -127,11 +127,9 @@ public class Locate
     {
         Identifier structureId = structureRegistryKey.getValue();
         Identifier dimensionId = serverWorld.getRegistryKey().getValue();
-        HashMap<Identifier, HashMap<Identifier, HashSet<BlockPos>>> map1=getServerState(serverWorld.getServer()).visitedStructure;
-        if(!map1.containsKey(structureId))map1.put(structureId,new HashMap<>());
-        HashMap<Identifier, HashSet<BlockPos>> map2=map1.get(structureId);
-        if(!map2.containsKey(dimensionId))map2.put(dimensionId,new HashSet<>());
-        return map2.get(dimensionId);
+        return getServerState(serverWorld.getServer()).visitedStructure
+                .computeIfAbsent(structureId,i->new HashMap<>())
+                .computeIfAbsent(dimensionId,i->new HashSet<>());
     }
     private static int find(ServerCommandSource source, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate) throws CommandSyntaxException
     {
