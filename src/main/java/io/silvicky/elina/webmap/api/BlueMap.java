@@ -11,6 +11,7 @@ import de.bluecolored.bluemap.api.math.Line;
 import io.silvicky.elina.webmap.MapRender;
 import io.silvicky.elina.webmap.WebMapStorage;
 import io.silvicky.elina.webmap.entities.Point;
+import io.silvicky.elina.webmap.farm.FarmInfo;
 import io.silvicky.elina.webmap.subway.SubwayLine;
 import io.silvicky.elina.webmap.subway.SubwayStation;
 import io.silvicky.elina.webmap.subway.SubwaySystem;
@@ -27,10 +28,12 @@ import java.util.*;
 
 import static io.silvicky.elina.Elina.server;
 import static io.silvicky.elina.StateSaver.getServerState;
+import static io.silvicky.elina.common.Util.collectionToString;
 import static java.lang.String.format;
 
 class BlueMap
 {
+    private static final String defaultIcon="assets/poi.svg";
     static void register()
     {
         BlueMapAPI.onEnable(api-> refresh());
@@ -52,7 +55,7 @@ class BlueMap
         cur.getParent().toFile().mkdirs();
         if(cur.toFile().exists())return ret;
         BufferedImage image=MapRender.render(id);
-        if(image==null)return "assets/poi.svg";
+        if(image==null)return defaultIcon;
         try
         {
             ImageIO.write(image,"png",cur.toFile());
@@ -140,6 +143,18 @@ class BlueMap
             if(line.ring)markerSet.put(format(segmentFormat,segmentCount++),fromBlockPoss(subwaySystem.stationDetails.get(last).pos(),subwaySystem.stationDetails.get(first).pos(), line.color));
         }
     }
+    private static void renderFarm(MarkerSet markerSet, HashMap<String, FarmInfo> farms)
+    {
+        for(Map.Entry<String, FarmInfo> i:farms.entrySet())
+        {
+            markerSet.put(i.getKey(),POIMarker.builder()
+                    .position(fromBlockPos(i.getValue().pos()))
+                    .label(i.getValue().label())
+                    .detail(format("%s{%s}",i.getValue().detail(),collectionToString(i.getValue().items())))
+                    .icon(defaultIcon, MapRender.width/2,MapRender.width/2)
+                    .build());
+        }
+    }
     static void refresh()
     {
         Optional<BlueMapAPI> apiOpt= BlueMapAPI.getInstance();
@@ -153,6 +168,9 @@ class BlueMap
             MarkerSet subway=new MarkerSet("Subway");
             markerSets.put("subway",subway);
             renderSubway(api,subway,storage.subwaySystem());
+            MarkerSet farm=new MarkerSet("Farm");
+            markerSets.put("farm",farm);
+            renderFarm(farm,storage.farms());
             for(Map.Entry<String,String> entry1:storage.sets().entrySet())
             {
                 if(!markerSets.containsKey(entry1.getKey()))markerSets.put(entry1.getKey(), new MarkerSet(entry1.getValue()));

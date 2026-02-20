@@ -23,6 +23,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -80,7 +81,7 @@ public class Farm
                             .executes(ctx-> find(ctx.getSource(),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))
                             .then(argument(DIMENSION,new DimensionArgumentType())
                                     .then(argument(POS,new BlockPosArgumentType())
-                                            .executes(ctx->find(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),BlockPosArgumentType.getBlockPos(ctx,POS),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))))));
+                                            .executes(ctx->find(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION), Vec3d.of(BlockPosArgumentType.getBlockPos(ctx,POS)),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))))));
     public static HashMap<String, FarmInfo> getFarmMap(ServerWorld world)
     {
         return getServerState(world.getServer()).webMapStorage
@@ -149,12 +150,12 @@ public class Farm
     }
     private static int find(ServerCommandSource source, ItemStackArgument item)
     {
-        return find(source, source.getWorld(), BlockPos.ofFloored(source.getPosition()), item);
+        return find(source, source.getWorld(), source.getPosition(), item);
     }
-    private static int find(ServerCommandSource source, ServerWorld serverWorld, BlockPos blockPos, ItemStackArgument item)
+    private static int find(ServerCommandSource source, ServerWorld serverWorld, Vec3d pos, ItemStackArgument item)
     {
         List<FindResult> farms=new ArrayList<>();
-        DistanceCalculator distanceCalculator=new DistanceCalculator(serverWorld,blockPos.toCenterPos());
+        DistanceCalculator distanceCalculator=new DistanceCalculator(serverWorld,pos);
         for(java.util.Map.Entry<Identifier, WebMapStorage> i:getServerState(source.getServer()).webMapStorage.entrySet())
         {
             for(java.util.Map.Entry<String, FarmInfo> j:i.getValue().farms().entrySet())
