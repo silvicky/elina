@@ -7,6 +7,7 @@ import net.minecraft.command.permission.PermissionLevel;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 
+import static io.silvicky.elina.command.Farm.farmArgumentBuilder;
 import static io.silvicky.elina.command.Locate.locateArgumentBuilder;
 import static io.silvicky.elina.command.Map.mapArgumentBuilder;
 import static io.silvicky.elina.command.Subway.subwayArgumentBuilder;
@@ -22,7 +23,8 @@ public class CommandRoot
                         .executes(context->help(context.getSource()))
                         .then(locateArgumentBuilder)
                         .then(mapArgumentBuilder)
-                        .then(subwayArgumentBuilder));
+                        .then(subwayArgumentBuilder)
+                        .then(farmArgumentBuilder));
     }
     private static int help(ServerCommandSource source)
     {

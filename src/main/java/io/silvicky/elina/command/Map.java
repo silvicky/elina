@@ -32,7 +32,7 @@ public class Map
     public static final String SET = "set";
     public static LiteralArgumentBuilder<ServerCommandSource> mapArgumentBuilder
             = literal("map")
-            .then(literal("mark")
+            .then(literal("add")
                     .then(argument(DIMENSION,new DimensionArgumentType())
                             .then(argument(ID,StringArgumentType.string())
                                     .then(argument(SET,StringArgumentType.string())
@@ -40,12 +40,12 @@ public class Map
                                                     .then(argument(ICON, IntegerArgumentType.integer())
                                                             .then(argument(LABEL,StringArgumentType.string())
                                                                     .then(argument(DETAIL,StringArgumentType.string())
-                                                                            .executes(ctx->mark(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),StringArgumentType.getString(ctx,SET),BlockPosArgumentType.getBlockPos(ctx,POS),IntegerArgumentType.getInteger(ctx, ICON),StringArgumentType.getString(ctx,LABEL),StringArgumentType.getString(ctx,DETAIL)))))))))))
-            .then(literal("remove")
+                                                                            .executes(ctx-> add(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),StringArgumentType.getString(ctx,SET),BlockPosArgumentType.getBlockPos(ctx,POS),IntegerArgumentType.getInteger(ctx, ICON),StringArgumentType.getString(ctx,LABEL),StringArgumentType.getString(ctx,DETAIL)))))))))))
+            .then(literal("del")
                     .then(argument(DIMENSION,new DimensionArgumentType())
                             .then(argument(ID,StringArgumentType.string())
                                     .then(argument(SET,StringArgumentType.string())
-                                            .executes(ctx->remove(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),StringArgumentType.getString(ctx,SET)))))))
+                                            .executes(ctx-> delete(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),StringArgumentType.getString(ctx,SET)))))))
             .then(literal("list")
                     .then(argument(DIMENSION,new DimensionArgumentType())
                             .then(argument(SET,StringArgumentType.string())
@@ -58,7 +58,10 @@ public class Map
             .then(literal("delset")
                     .then(argument(DIMENSION,new DimensionArgumentType())
                             .then(argument(SET,StringArgumentType.string())
-                                    .executes(ctx->deleteSet(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,SET))))));
+                                    .executes(ctx->deleteSet(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,SET))))))
+            .then(literal("listset")
+                    .then(argument(DIMENSION,new DimensionArgumentType())
+                            .executes(ctx->listSet(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION)))));
     public static HashMap<String, Point> getPointMap(ServerWorld world, String set)
     {
         return getServerState(world.getServer()).webMapStorage
@@ -72,14 +75,14 @@ public class Map
                 .computeIfAbsent(world.getRegistryKey().getValue(),i->new WebMapStorage())
                 .sets();
     }
-    private static int mark(ServerCommandSource source, ServerWorld world, String id, String set,BlockPos pos, int icon, String label, String detail)
+    private static int add(ServerCommandSource source, ServerWorld world, String id, String set, BlockPos pos, int icon, String label, String detail)
     {
         getPointMap(world, set).put(id,new Point(pos,label,detail,icon));
         source.sendFeedback(()-> Text.literal("Done."),false);
         refresh();
         return Command.SINGLE_SUCCESS;
     }
-    private static int remove(ServerCommandSource source, ServerWorld world, String id, String set)
+    private static int delete(ServerCommandSource source, ServerWorld world, String id, String set)
     {
         getPointMap(world, set).remove(id);
         source.sendFeedback(()-> Text.literal("Done."),false);
@@ -107,6 +110,15 @@ public class Map
         getSetMap(world).remove(set);
         source.sendFeedback(()-> Text.literal("Done."),false);
         refresh();
+        return Command.SINGLE_SUCCESS;
+    }
+    private static int listSet(ServerCommandSource source, ServerWorld world)
+    {
+        for(java.util.Map.Entry<String, String> entry: getSetMap(world).entrySet())
+        {
+            source.sendFeedback(()-> Text.literal(format("%s: %s",entry.getKey(),entry.getValue())),false);
+        }
+        source.sendFeedback(()-> Text.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
 }

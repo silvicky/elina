@@ -12,6 +12,10 @@ import static java.lang.String.format;
 
 public record FarmInfo(HashSet<Identifier> items, BlockPos pos, String label, String detail)
 {
+    public FarmInfo(BlockPos pos, String label, String detail)
+    {
+        this(new HashSet<>(),pos,label,detail);
+    }
     @Override
     public String toString()
     {
