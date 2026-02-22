@@ -3,21 +3,28 @@ package io.silvicky.elina.webmap.farm;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.datafixers.util.Either;
+import io.silvicky.elina.Elina;
 import io.silvicky.elina.command.Farm;
+import io.silvicky.elina.common.RecipeManager;
 import net.minecraft.item.Item;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
 
 import java.util.*;
 
+import static io.silvicky.elina.command.Farm.FARM_NOT_FOUND;
 import static io.silvicky.elina.common.RecipeManager.recipes;
 import static io.silvicky.elina.common.RecipeManager.recipesWithSource;
+import static io.silvicky.elina.common.Util.collectionToString;
+import static io.silvicky.elina.common.Util.getPlayerUuid;
+import static java.lang.String.format;
 
 public class FarmLookup
 {
@@ -106,17 +113,48 @@ public class FarmLookup
     private static final HashMap<String,FarmLookup> instances=new HashMap<>();
     public static void build(String id,List<Farm.FindResult> farms)
     {
+        RecipeManager.load(Elina.server);
         FarmLookup instance=new FarmLookup();
         instance.build(farms);
         instances.put(id,instance);
     }
-    public static void lookup(String id, RegistryEntry<Item> target) throws CommandSyntaxException
+    private void outputSolution(ServerCommandSource source, RegistryEntry<Item> target, Either<Farm.FindResult,Set<RegistryEntry<Item>>> solution)
     {
-        FarmLookup instance= instances.get(id);
+        solution.left().ifPresent(findResult -> source.sendFeedback(() -> Text.literal(format("%s -> %s", target.getIdAsString(), findResult)), false));
+        solution.right().ifPresent(registryEntries -> source.sendFeedback(() -> Text.literal(format("%s -> {%s}", target.getIdAsString(), collectionToString(registryEntries.stream().map(RegistryEntry::getIdAsString).toList()))), false));
+    }
+    private void lookupInternal(ServerCommandSource source, RegistryEntry<Item> target) throws CommandSyntaxException
+    {
+        if(!itemCurrentSolution.containsKey(target))throw FARM_NOT_FOUND.create();
+        Set<RegistryEntry<Item>> gone=new HashSet<>();
+        Queue<RegistryEntry<Item>> q=new ArrayDeque<>();
+        q.add(target);
+        gone.add(target);
+        while(!q.isEmpty())
+        {
+            RegistryEntry<Item> cur=q.poll();
+            Either<Farm.FindResult,Set<RegistryEntry<Item>>> solution=itemCurrentSolution.get(cur);
+            outputSolution(source,cur,solution);
+            if(solution.right().isPresent())
+            {
+                for(RegistryEntry<Item> j:solution.right().get())
+                {
+                    if(!gone.contains(j))
+                    {
+                        gone.add(j);
+                        q.add(j);
+                    }
+                }
+            }
+        }
+    }
+    public static void lookup(ServerCommandSource source, RegistryEntry<Item> target) throws CommandSyntaxException
+    {
+        FarmLookup instance= instances.get(getPlayerUuid(source.getPlayer()));
         if(instance==null)
         {
             throw FARM_LOOKUP_NOT_FOUND.create();
         }
-        //TODO
+        instance.lookupInternal(source,target);
     }
 }

@@ -13,6 +13,7 @@ public class RecipeManager
 {
     public static final Map<Identifier, Pair<List<Ingredient>, RegistryEntry<Item>>> recipes=new HashMap<>();
     public static final Map<RegistryEntry<Item>, Set<Identifier>> recipesWithSource=new HashMap<>();
+    private static boolean isReady=false;
     private static void resolveRecipe(Identifier id,Recipe<?> recipe)
     {
         switch (recipe)
@@ -26,6 +27,7 @@ public class RecipeManager
     }
     public static void load(MinecraftServer server)
     {
+        if(isReady)return;
         for(RecipeEntry<?> recipeEntry:server.getRecipeManager().values())
         {
             resolveRecipe(recipeEntry.id().getValue(),recipeEntry.value());
@@ -40,5 +42,6 @@ public class RecipeManager
                 }
             }
         }
+        isReady=true;
     }
 }

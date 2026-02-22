@@ -82,11 +82,10 @@ public class Farm
                                     .then(argument(POS,new BlockPosArgumentType())
                                             .executes(ctx->find(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION), Vec3d.of(BlockPosArgumentType.getBlockPos(ctx,POS)),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))))))
             .then(literal("build")
-                    .then(argument(ITEM, ItemStackArgumentType.itemStack(commandRegistryAccess))
-                            .executes(ctx-> build(ctx.getSource(),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))
+                            .executes(ctx-> build(ctx.getSource()))
                             .then(argument(DIMENSION,new DimensionArgumentType())
                                     .then(argument(POS,new BlockPosArgumentType())
-                                            .executes(ctx->build(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION), Vec3d.of(BlockPosArgumentType.getBlockPos(ctx,POS)),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))))))
+                                            .executes(ctx->build(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION), Vec3d.of(BlockPosArgumentType.getBlockPos(ctx,POS)))))))
             .then(literal("findadv")
                     .then(argument(ITEM, ItemStackArgumentType.itemStack(commandRegistryAccess))
                             .executes(ctx-> findAdvanced(ctx.getSource(),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))));
@@ -189,11 +188,11 @@ public class Farm
         }
         return Command.SINGLE_SUCCESS;
     }
-    private static int build(ServerCommandSource source, ItemStackArgument item)
+    private static int build(ServerCommandSource source)
     {
-        return build(source, source.getWorld(), source.getPosition(), item);
+        return build(source, source.getWorld(), source.getPosition());
     }
-    private static int build(ServerCommandSource source, ServerWorld serverWorld, Vec3d pos, ItemStackArgument item)
+    private static int build(ServerCommandSource source, ServerWorld serverWorld, Vec3d pos)
     {
         List<FindResult> farms=new ArrayList<>();
         DistanceCalculator distanceCalculator=new DistanceCalculator(serverWorld,pos);
@@ -213,12 +212,13 @@ public class Farm
             }
         }
         FarmLookup.build(getPlayerUuid(source.getPlayer()),farms);
+        source.sendFeedback(()-> Text.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
     private static int findAdvanced(ServerCommandSource source, ItemStackArgument item) throws CommandSyntaxException
     {
-        //TODO
-        FarmLookup.lookup(getPlayerUuid(source.getPlayer()),Registries.ITEM.getEntry(item.getItem()));
+        FarmLookup.lookup(source,Registries.ITEM.getEntry(item.getItem()));
+        source.sendFeedback(()-> Text.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
 }
