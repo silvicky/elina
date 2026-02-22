@@ -1,5 +1,6 @@
 package io.silvicky.elina.common;
 
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 
@@ -56,5 +57,10 @@ public class Util
     public static Identifier getDimensionId(Identifier id, DimensionType type)
     {
         return Identifier.of(id.getNamespace(),getDimensionId(id.getPath(),type));
+    }
+    public static String getPlayerUuid(ServerPlayerEntity player)
+    {
+        if(player==null)return "";
+        return player.getUuidAsString();
     }
 }

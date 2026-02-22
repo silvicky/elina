@@ -5,3 +5,7 @@ accessible field net/minecraft/structure/SimpleStructurePiece templateIdString L
 accessible method net/minecraft/server/command/LocateCommand getStructureListForPredicate (Lnet/minecraft/command/argument/RegistryPredicateArgumentType$RegistryPredicate;Lnet/minecraft/registry/Registry;)Ljava/util/Optional;
 accessible method net/minecraft/world/gen/chunk/ChunkGenerator locateStructure (Ljava/util/Set;Lnet/minecraft/world/WorldView;Lnet/minecraft/world/gen/StructureAccessor;ZLnet/minecraft/world/gen/chunk/placement/StructurePlacement;Lnet/minecraft/util/math/ChunkPos;)Lcom/mojang/datafixers/util/Pair;
 accessible field net/minecraft/world/IdCountsState map I
+accessible field net/minecraft/recipe/SingleStackRecipe result Lnet/minecraft/item/ItemStack;
+accessible field net/minecraft/recipe/ShapelessRecipe result Lnet/minecraft/item/ItemStack;
+accessible field net/minecraft/recipe/ShapedRecipe result Lnet/minecraft/item/ItemStack;
+accessible field net/minecraft/recipe/Ingredient entries Lnet/minecraft/registry/entry/RegistryEntryList;

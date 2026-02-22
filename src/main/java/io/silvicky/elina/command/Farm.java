@@ -8,6 +8,7 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import io.silvicky.elina.common.DistanceCalculator;
 import io.silvicky.elina.webmap.WebMapStorage;
 import io.silvicky.elina.webmap.farm.FarmInfo;
+import io.silvicky.elina.webmap.farm.FarmLookup;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.DimensionArgumentType;
@@ -33,6 +34,7 @@ import static io.silvicky.elina.command.Locate.DIMENSION;
 import static io.silvicky.elina.command.Locate.POS;
 import static io.silvicky.elina.command.Map.*;
 import static io.silvicky.elina.common.Util.collectionToString;
+import static io.silvicky.elina.common.Util.getPlayerUuid;
 import static io.silvicky.elina.webmap.api.APIEntry.refresh;
 import static java.lang.String.format;
 import static net.minecraft.server.command.CommandManager.argument;
@@ -79,12 +81,15 @@ public class Farm
                             .then(argument(DIMENSION,new DimensionArgumentType())
                                     .then(argument(POS,new BlockPosArgumentType())
                                             .executes(ctx->find(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION), Vec3d.of(BlockPosArgumentType.getBlockPos(ctx,POS)),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))))))
-            .then(literal("findadv")
+            .then(literal("build")
                     .then(argument(ITEM, ItemStackArgumentType.itemStack(commandRegistryAccess))
-                            .executes(ctx-> findAdvanced(ctx.getSource(),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))
+                            .executes(ctx-> build(ctx.getSource(),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))
                             .then(argument(DIMENSION,new DimensionArgumentType())
                                     .then(argument(POS,new BlockPosArgumentType())
-                                            .executes(ctx->findAdvanced(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION), Vec3d.of(BlockPosArgumentType.getBlockPos(ctx,POS)),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))))));
+                                            .executes(ctx->build(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION), Vec3d.of(BlockPosArgumentType.getBlockPos(ctx,POS)),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))))))
+            .then(literal("findadv")
+                    .then(argument(ITEM, ItemStackArgumentType.itemStack(commandRegistryAccess))
+                            .executes(ctx-> findAdvanced(ctx.getSource(),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))));
     public static HashMap<String, FarmInfo> getFarmMap(ServerWorld world)
     {
         return getServerState(world.getServer()).webMapStorage
@@ -93,7 +98,7 @@ public class Farm
     }
     private static int add(ServerCommandSource source, ServerWorld world, String id, BlockPos pos, String label, String detail)
     {
-        getFarmMap(world).computeIfPresent(id,(k,v)->new FarmInfo(v.items(),pos,label,detail));
+        getFarmMap(world).compute(id,(k,v)->v==null?new FarmInfo(pos,label,detail):new FarmInfo(v.items(),pos,label,detail));
         source.sendFeedback(()-> Text.literal("Done."),false);
         refresh();
         return Command.SINGLE_SUCCESS;
@@ -184,11 +189,11 @@ public class Farm
         }
         return Command.SINGLE_SUCCESS;
     }
-    private static int findAdvanced(ServerCommandSource source, ItemStackArgument item)
+    private static int build(ServerCommandSource source, ItemStackArgument item)
     {
-        return findAdvanced(source, source.getWorld(), source.getPosition(), item);
+        return build(source, source.getWorld(), source.getPosition(), item);
     }
-    private static int findAdvanced(ServerCommandSource source, ServerWorld serverWorld, Vec3d pos, ItemStackArgument item)
+    private static int build(ServerCommandSource source, ServerWorld serverWorld, Vec3d pos, ItemStackArgument item)
     {
         List<FindResult> farms=new ArrayList<>();
         DistanceCalculator distanceCalculator=new DistanceCalculator(serverWorld,pos);
@@ -207,7 +212,13 @@ public class Farm
                         j.getValue()));
             }
         }
+        FarmLookup.build(getPlayerUuid(source.getPlayer()),farms);
+        return Command.SINGLE_SUCCESS;
+    }
+    private static int findAdvanced(ServerCommandSource source, ItemStackArgument item) throws CommandSyntaxException
+    {
         //TODO
+        FarmLookup.lookup(getPlayerUuid(source.getPlayer()),Registries.ITEM.getEntry(item.getItem()));
         return Command.SINGLE_SUCCESS;
     }
 }
