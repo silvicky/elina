@@ -26,10 +26,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import static io.silvicky.elina.StateSaver.getServerState;
 import static io.silvicky.elina.command.Locate.DIMENSION;
@@ -81,7 +78,13 @@ public class Farm
                             .executes(ctx-> find(ctx.getSource(),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))
                             .then(argument(DIMENSION,new DimensionArgumentType())
                                     .then(argument(POS,new BlockPosArgumentType())
-                                            .executes(ctx->find(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION), Vec3d.of(BlockPosArgumentType.getBlockPos(ctx,POS)),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))))));
+                                            .executes(ctx->find(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION), Vec3d.of(BlockPosArgumentType.getBlockPos(ctx,POS)),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))))))
+            .then(literal("findadv")
+                    .then(argument(ITEM, ItemStackArgumentType.itemStack(commandRegistryAccess))
+                            .executes(ctx-> findAdvanced(ctx.getSource(),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))
+                            .then(argument(DIMENSION,new DimensionArgumentType())
+                                    .then(argument(POS,new BlockPosArgumentType())
+                                            .executes(ctx->findAdvanced(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION), Vec3d.of(BlockPosArgumentType.getBlockPos(ctx,POS)),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))))));
     public static HashMap<String, FarmInfo> getFarmMap(ServerWorld world)
     {
         return getServerState(world.getServer()).webMapStorage
@@ -90,7 +93,7 @@ public class Farm
     }
     private static int add(ServerCommandSource source, ServerWorld world, String id, BlockPos pos, String label, String detail)
     {
-        getFarmMap(world).put(id,new FarmInfo(pos,label,detail));
+        getFarmMap(world).computeIfPresent(id,(k,v)->new FarmInfo(v.items(),pos,label,detail));
         source.sendFeedback(()-> Text.literal("Done."),false);
         refresh();
         return Command.SINGLE_SUCCESS;
@@ -135,7 +138,7 @@ public class Farm
         source.sendFeedback(()-> Text.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
-    private record FindResult(double distance, Identifier dimension, String id, FarmInfo info) implements Comparable<FindResult>
+    public record FindResult(double distance, Identifier dimension, String id, FarmInfo info) implements Comparable<FindResult>
     {
         @Override
         public String toString()
@@ -161,10 +164,12 @@ public class Farm
             for(java.util.Map.Entry<String, FarmInfo> j:i.getValue().farms().entrySet())
             {
                 if(!j.getValue().items().contains(Registries.ITEM.getId(item.getItem())))continue;
+                Optional<Double> dis=distanceCalculator.calculateDistance(
+                        source.getServer().getWorld(RegistryKey.of(RegistryKeys.WORLD,i.getKey())),
+                        j.getValue().pos().toCenterPos());
+                if(dis.isEmpty())continue;
                 farms.add(new FindResult(
-                        distanceCalculator.calculateDistance(
-                                source.getServer().getWorld(RegistryKey.of(RegistryKeys.WORLD,i.getKey())),
-                                j.getValue().pos().toCenterPos()),
+                        dis.get(),
                         i.getKey(),
                         j.getKey(),
                         j.getValue()));
@@ -177,6 +182,32 @@ public class Farm
             FindResult i=farms.getFirst();
             source.sendFeedback(() -> Text.literal(i.toString()), false);
         }
+        return Command.SINGLE_SUCCESS;
+    }
+    private static int findAdvanced(ServerCommandSource source, ItemStackArgument item)
+    {
+        return findAdvanced(source, source.getWorld(), source.getPosition(), item);
+    }
+    private static int findAdvanced(ServerCommandSource source, ServerWorld serverWorld, Vec3d pos, ItemStackArgument item)
+    {
+        List<FindResult> farms=new ArrayList<>();
+        DistanceCalculator distanceCalculator=new DistanceCalculator(serverWorld,pos);
+        for(java.util.Map.Entry<Identifier, WebMapStorage> i:getServerState(source.getServer()).webMapStorage.entrySet())
+        {
+            for(java.util.Map.Entry<String, FarmInfo> j:i.getValue().farms().entrySet())
+            {
+                Optional<Double> dis=distanceCalculator.calculateDistance(
+                        source.getServer().getWorld(RegistryKey.of(RegistryKeys.WORLD,i.getKey())),
+                        j.getValue().pos().toCenterPos());
+                if(dis.isEmpty())continue;
+                farms.add(new FindResult(
+                        dis.get(),
+                        i.getKey(),
+                        j.getKey(),
+                        j.getValue()));
+            }
+        }
+        //TODO
         return Command.SINGLE_SUCCESS;
     }
 }

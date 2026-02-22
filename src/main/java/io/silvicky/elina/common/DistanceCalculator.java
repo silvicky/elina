@@ -15,7 +15,20 @@ import net.minecraft.world.gen.structure.Structure;
 import net.minecraft.world.gen.structure.StructureKeys;
 
 import java.util.Objects;
+import java.util.Optional;
 
+/**
+ * An inter-dimension distance calculator
+ * <p>
+ * It runs with such assumptions:
+ * <ol>
+ *  <li>Nether has a scale larger than overworld, and is always accessible</li>
+ *  <li>In the same dimension, distance between two points is the 2D Euclidean distance</li>
+ *  <li>From overworld/nether to end, the nearest stronghold is the entry of end, and player is spawned at the end spawn</li>
+ *  <li>From end to overworld/nether, (0,0) is the exit of end, and player is spawned at the world spawn</li>
+ *  <li>If CombinedWorld is installed, only distances of points in the same world(not group/namespace) are considered.</li>
+ * </ol>
+ */
 public class DistanceCalculator
 {
     private final ServerWorld sourceWorld;
@@ -68,15 +81,15 @@ public class DistanceCalculator
             spawn=spawnPoint.getPos().toCenterPos().withAxis(Direction.Axis.Y,0).multiply(1/scale);
         }
     }
-    public double calculateDistance(ServerWorld targetWorld, Vec3d targetPos)
+    public Optional<Double> calculateDistance(ServerWorld targetWorld, Vec3d targetPos)
     {
-        if(!Util.getDimensionId(sourceWorld, Util.DimensionType.OVERWORLD_TYPE).equals(Util.getDimensionId(targetWorld, Util.DimensionType.OVERWORLD_TYPE)))return Double.MAX_VALUE;
+        if(!Util.getDimensionId(sourceWorld, Util.DimensionType.OVERWORLD_TYPE).equals(Util.getDimensionId(targetWorld, Util.DimensionType.OVERWORLD_TYPE)))return Optional.empty();
         targetPos=targetPos.withAxis(Direction.Axis.Y,0);
         Util.DimensionType targetType= Util.DimensionType.getDimensionType(targetWorld);
         if(sourceType== Util.DimensionType.SINGLET
                 ||(sourceType== Util.DimensionType.END_TYPE&&targetType== Util.DimensionType.END_TYPE))
         {
-            return sourcePos.distanceTo(targetPos);
+            return Optional.of(sourcePos.distanceTo(targetPos));
         }
         if(targetType== Util.DimensionType.NETHER_TYPE)
         {
@@ -85,15 +98,16 @@ public class DistanceCalculator
         }
         if(sourceType== Util.DimensionType.OVERWORLD_TYPE&&targetType== Util.DimensionType.OVERWORLD_TYPE)
         {
-            return sourcePos.distanceTo(targetPos)*scale;
+            return Optional.of(sourcePos.distanceTo(targetPos)*scale);
         }
         if(sourceType== Util.DimensionType.OVERWORLD_TYPE)
         {
-            return strongholdDistance*scale+platform.distanceTo(targetPos);
+            if(strongholdDistance==Double.MAX_VALUE)return Optional.empty();
+            return Optional.of(strongholdDistance*scale+platform.distanceTo(targetPos));
         }
         else
         {
-            return sourcePos.distanceTo(returnGate)+spawn.distanceTo(targetPos)*scale;
+            return Optional.of(sourcePos.distanceTo(returnGate)+spawn.distanceTo(targetPos)*scale);
         }
     }
 }
