@@ -50,18 +50,25 @@ public class Locate
                                             .executes(ctx->find(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),BlockPosArgumentType.getBlockPos(ctx,POS),RegistryPredicateArgumentType.getPredicate(ctx, STRUCTURE, RegistryKeys.STRUCTURE, STRUCTURE_INVALID_EXCEPTION)))))))
             .then(literal("mark")
                     .then(argument(STRUCTURE,RegistryPredicateArgumentType.registryPredicate(RegistryKeys.STRUCTURE))
+                            .executes(ctx->mark(ctx.getSource(),RegistryPredicateArgumentType.getPredicate(ctx,STRUCTURE, RegistryKeys.STRUCTURE, STRUCTURE_INVALID_EXCEPTION)))
                             .then(argument(DIMENSION,new DimensionArgumentType())
                                     .then(argument(POS,new BlockPosArgumentType())
                                             .executes(ctx->mark(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),BlockPosArgumentType.getBlockPos(ctx,POS),RegistryPredicateArgumentType.getPredicate(ctx, STRUCTURE, RegistryKeys.STRUCTURE, STRUCTURE_INVALID_EXCEPTION)))))))
             .then(literal("remove")
                     .then(argument(STRUCTURE,RegistryPredicateArgumentType.registryPredicate(RegistryKeys.STRUCTURE))
+                            .executes(ctx->remove(ctx.getSource(),RegistryPredicateArgumentType.getPredicate(ctx,STRUCTURE,RegistryKeys.STRUCTURE,STRUCTURE_INVALID_EXCEPTION)))
                             .then(argument(DIMENSION,new DimensionArgumentType())
                                     .then(argument(POS,new BlockPosArgumentType())
                                             .executes(ctx->remove(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),BlockPosArgumentType.getBlockPos(ctx,POS),RegistryPredicateArgumentType.getPredicate(ctx, STRUCTURE, RegistryKeys.STRUCTURE, STRUCTURE_INVALID_EXCEPTION)))))))
             .then(literal("list")
                     .then(argument(STRUCTURE,RegistryPredicateArgumentType.registryPredicate(RegistryKeys.STRUCTURE))
+                            .executes(ctx->list(ctx.getSource(),RegistryPredicateArgumentType.getPredicate(ctx,STRUCTURE,RegistryKeys.STRUCTURE,STRUCTURE_INVALID_EXCEPTION)))
                             .then(argument(DIMENSION,new DimensionArgumentType())
                                     .executes(ctx->list(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),RegistryPredicateArgumentType.getPredicate(ctx, STRUCTURE, RegistryKeys.STRUCTURE, STRUCTURE_INVALID_EXCEPTION))))));
+    private static int mark(ServerCommandSource source, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate) throws CommandSyntaxException
+    {
+        return mark(source,source.getWorld(),source.getPlayerOrThrow().getBlockPos(), predicate);
+    }
     private static int mark(ServerCommandSource source, ServerWorld serverWorld, BlockPos blockPos, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate) throws CommandSyntaxException
     {
         blockPos=blockPos.withY(0);
@@ -77,6 +84,10 @@ public class Locate
         set.add(blockPos);
         source.sendFeedback(()-> Text.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
+    }
+    private static int remove(ServerCommandSource source, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate) throws CommandSyntaxException
+    {
+        return remove(source,source.getWorld(),source.getPlayerOrThrow().getBlockPos(), predicate);
     }
     private static int remove(ServerCommandSource source, ServerWorld serverWorld, BlockPos blockPos, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate)
     {
@@ -106,6 +117,10 @@ public class Locate
         set.remove(blockPos);
         source.sendFeedback(()-> Text.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
+    }
+    private static int list(ServerCommandSource source, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate)
+    {
+        return list(source,source.getWorld(),predicate);
     }
     private static int list(ServerCommandSource source, ServerWorld serverWorld, RegistryPredicateArgumentType.RegistryPredicate<Structure> predicate)
     {
