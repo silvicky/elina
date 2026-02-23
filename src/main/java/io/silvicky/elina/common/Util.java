@@ -50,8 +50,9 @@ public class Util
 
     public static String getDimensionId(String id, DimensionType type)
     {
-        if(id.endsWith(NETHER))id=id.substring(0,id.length()- NETHER.length())+ type.name;
-        if(id.endsWith(END))id=id.substring(0,id.length()- END.length())+ type.name;
+        if(id.endsWith(NETHER))return id.substring(0,id.length()- NETHER.length())+ type.name;
+        if(id.endsWith(END))return id.substring(0,id.length()- END.length())+ type.name;
+        if(id.endsWith(OVERWORLD))return id.substring(0,id.length()- OVERWORLD.length())+ type.name;
         return id;
     }
     public static Identifier getDimensionId(Identifier id, DimensionType type)
