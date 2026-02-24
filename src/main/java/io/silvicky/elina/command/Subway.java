@@ -42,13 +42,34 @@ public class Subway
     public static final String NEW="new";
     public static final SimpleCommandExceptionType LINE_NOT_FOUND=new SimpleCommandExceptionType(Text.literal("Line not found."));
     public static final SimpleCommandExceptionType STATION_NOT_FOUND=new SimpleCommandExceptionType(Text.literal("Station not found."));
-    public static class SubwayLineSuggestionProvider implements SuggestionProvider<ServerCommandSource>
+    private static class SubwayLineSuggestionProvider implements SuggestionProvider<ServerCommandSource>
     {
         @Override
         public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> commandContext, SuggestionsBuilder suggestionsBuilder) throws CommandSyntaxException
         {
             ServerWorld world=DimensionArgumentType.getDimensionArgument(commandContext,DIMENSION);
             for (String id:getSubway(world).lines.keySet()) suggestionsBuilder.suggest(id);
+            return suggestionsBuilder.buildFuture();
+        }
+    }
+    private static class SubwayStationSuggestionProvider implements SuggestionProvider<ServerCommandSource>
+    {
+        @Override
+        public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> commandContext, SuggestionsBuilder suggestionsBuilder) throws CommandSyntaxException
+        {
+            ServerWorld world=DimensionArgumentType.getDimensionArgument(commandContext,DIMENSION);
+            for (String id:getSubway(world).stationDetails.keySet()) suggestionsBuilder.suggest(id);
+            return suggestionsBuilder.buildFuture();
+        }
+    }
+    private static class SubwayLineStationSuggestionProvider implements SuggestionProvider<ServerCommandSource>
+    {
+        @Override
+        public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> commandContext, SuggestionsBuilder suggestionsBuilder) throws CommandSyntaxException
+        {
+            ServerWorld world=DimensionArgumentType.getDimensionArgument(commandContext,DIMENSION);
+            String id=StringArgumentType.getString(commandContext,ID);
+            for (String station:getSubway(world).lines.get(id).stations) suggestionsBuilder.suggest(station);
             return suggestionsBuilder.buildFuture();
         }
     }
@@ -62,6 +83,7 @@ public class Subway
                     .then(literal("add")
                             .then(argument(DIMENSION,new DimensionArgumentType())
                                     .then(argument(ID,StringArgumentType.string())
+                                            .suggests(new SubwayStationSuggestionProvider())
                                             .then(argument(POS,new BlockPosArgumentType())
                                                     .then(argument(LABEL,StringArgumentType.string())
                                                             .then(argument(DETAIL,StringArgumentType.string())
@@ -69,6 +91,7 @@ public class Subway
                     .then(literal("del")
                             .then(argument(DIMENSION,new DimensionArgumentType())
                                     .then(argument(ID,StringArgumentType.string())
+                                            .suggests(new SubwayStationSuggestionProvider())
                                             .executes(ctx->deleteStation(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID))))))
                     .then(literal("list")
                             .then(argument(DIMENSION,new DimensionArgumentType())
@@ -96,13 +119,16 @@ public class Subway
                                     .then(argument(ID,StringArgumentType.string())
                                             .suggests(new SubwayLineSuggestionProvider())
                                             .then(argument(NEW,StringArgumentType.string())
+                                                    .suggests(new SubwayStationSuggestionProvider())
                                                     .then(argument(PREV,StringArgumentType.string())
+                                                            .suggests(new SubwayLineStationSuggestionProvider())
                                                             .executes(ctx->addStationToLine(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),StringArgumentType.getString(ctx,NEW),StringArgumentType.getString(ctx,PREV))))))))
                     .then(literal("delstation")
                             .then(argument(DIMENSION, DimensionArgumentType.dimension())
                                     .then(argument(ID,StringArgumentType.string())
                                             .suggests(new SubwayLineSuggestionProvider())
                                             .then(argument(NEW,StringArgumentType.string())
+                                                    .suggests(new SubwayLineStationSuggestionProvider())
                                                     .executes(ctx->deleteStationFromLine(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),StringArgumentType.getString(ctx,NEW)))))))
                     .then(literal("liststation")
                             .then(argument(DIMENSION, DimensionArgumentType.dimension())
