@@ -3,8 +3,12 @@ package io.silvicky.elina.command;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import io.silvicky.elina.common.DistanceCalculator;
 import io.silvicky.elina.webmap.WebMapStorage;
 import io.silvicky.elina.webmap.farm.FarmInfo;
@@ -28,6 +32,7 @@ import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import static io.silvicky.elina.StateSaver.getServerState;
 import static io.silvicky.elina.command.Locate.DIMENSION;
@@ -45,11 +50,34 @@ public class Farm
     public static final String ITEM = "item";
     public static final SimpleCommandExceptionType FARM_NOT_FOUND=new SimpleCommandExceptionType(Text.literal("Farm not found."));
     public static final CommandRegistryAccess commandRegistryAccess=CommandManager.createRegistryAccess(BuiltinRegistries.createWrapperLookup());
+    private static class FarmSuggestionProvider implements SuggestionProvider<ServerCommandSource>
+    {
+        @Override
+        public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> commandContext, SuggestionsBuilder suggestionsBuilder) throws CommandSyntaxException
+        {
+            ServerWorld world=DimensionArgumentType.getDimensionArgument(commandContext,DIMENSION);
+            for (String id:getFarmMap(world).keySet()) suggestionsBuilder.suggest(id);
+            return suggestionsBuilder.buildFuture();
+        }
+    }
+    private static class FarmItemSuggestionProvider implements SuggestionProvider<ServerCommandSource>
+    {
+        @Override
+        public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> commandContext, SuggestionsBuilder suggestionsBuilder) throws CommandSyntaxException
+        {
+            ServerWorld world=DimensionArgumentType.getDimensionArgument(commandContext,DIMENSION);
+            FarmInfo info=getFarmMap(world).get(StringArgumentType.getString(commandContext,ID));
+            if(info==null)return suggestionsBuilder.buildFuture();
+            for (Identifier id:info.items()) suggestionsBuilder.suggest(id.toString());
+            return suggestionsBuilder.buildFuture();
+        }
+    }
     public static LiteralArgumentBuilder<ServerCommandSource> farmArgumentBuilder
             = literal("farm")
             .then(literal("add")
                     .then(argument(DIMENSION,new DimensionArgumentType())
                             .then(argument(ID, StringArgumentType.string())
+                                    .suggests(new FarmSuggestionProvider())
                                     .then(argument(POS,new BlockPosArgumentType())
                                             .then(argument(LABEL,StringArgumentType.string())
                                                     .then(argument(DETAIL,StringArgumentType.string())
@@ -57,6 +85,7 @@ public class Farm
             .then(literal("del")
                     .then(argument(DIMENSION,new DimensionArgumentType())
                             .then(argument(ID,StringArgumentType.string())
+                                    .suggests(new FarmSuggestionProvider())
                                     .executes(ctx-> delete(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID))))))
             .then(literal("list")
                     .then(argument(DIMENSION,new DimensionArgumentType())
@@ -64,16 +93,20 @@ public class Farm
             .then(literal("additem")
                     .then(argument(DIMENSION,new DimensionArgumentType())
                             .then(argument(ID,StringArgumentType.string())
+                                    .suggests(new FarmSuggestionProvider())
                                     .then(argument(ITEM, ItemStackArgumentType.itemStack(commandRegistryAccess))
                                             .executes(ctx-> addItem(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))))))
             .then(literal("delitem")
                     .then(argument(DIMENSION,new DimensionArgumentType())
                             .then(argument(ID,StringArgumentType.string())
+                                    .suggests(new FarmSuggestionProvider())
                                     .then(argument(ITEM, ItemStackArgumentType.itemStack(commandRegistryAccess))
+                                            .suggests(new FarmItemSuggestionProvider())
                                             .executes(ctx-> deleteItem(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))))))
             .then(literal("listitem")
                     .then(argument(DIMENSION,new DimensionArgumentType())
                             .then(argument(ID,StringArgumentType.string())
+                                    .suggests(new FarmSuggestionProvider())
                                     .executes(ctx-> listItem(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID))))))
             .then(literal("find")
                     .then(argument(ITEM, ItemStackArgumentType.itemStack(commandRegistryAccess))
