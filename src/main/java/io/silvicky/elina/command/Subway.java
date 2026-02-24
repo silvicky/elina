@@ -69,7 +69,9 @@ public class Subway
         {
             ServerWorld world=DimensionArgumentType.getDimensionArgument(commandContext,DIMENSION);
             String id=StringArgumentType.getString(commandContext,ID);
-            for (String station:getSubway(world).lines.get(id).stations) suggestionsBuilder.suggest(station);
+            SubwayLine line=getSubway(world).lines.get(id);
+            if(line==null)return suggestionsBuilder.buildFuture();
+            for (String station:line.stations) suggestionsBuilder.suggest(station);
             return suggestionsBuilder.buildFuture();
         }
     }
