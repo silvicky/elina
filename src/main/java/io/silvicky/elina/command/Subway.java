@@ -5,8 +5,12 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import io.silvicky.elina.webmap.WebMapStorage;
 import io.silvicky.elina.webmap.subway.SubwayLine;
 import io.silvicky.elina.webmap.subway.SubwayStation;
@@ -18,6 +22,8 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
+
+import java.util.concurrent.CompletableFuture;
 
 import static io.silvicky.elina.StateSaver.getServerState;
 import static io.silvicky.elina.command.Locate.DIMENSION;
@@ -36,7 +42,16 @@ public class Subway
     public static final String NEW="new";
     public static final SimpleCommandExceptionType LINE_NOT_FOUND=new SimpleCommandExceptionType(Text.literal("Line not found."));
     public static final SimpleCommandExceptionType STATION_NOT_FOUND=new SimpleCommandExceptionType(Text.literal("Station not found."));
-
+    public static class SubwayLineSuggestionProvider implements SuggestionProvider<ServerCommandSource>
+    {
+        @Override
+        public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> commandContext, SuggestionsBuilder suggestionsBuilder) throws CommandSyntaxException
+        {
+            ServerWorld world=DimensionArgumentType.getDimensionArgument(commandContext,DIMENSION);
+            for (String id:getSubway(world).lines.keySet()) suggestionsBuilder.suggest(id);
+            return suggestionsBuilder.buildFuture();
+        }
+    }
     public static LiteralArgumentBuilder<ServerCommandSource> subwayArgumentBuilder
             = literal("subway")
             .then(literal("icon")
@@ -62,6 +77,7 @@ public class Subway
                     .then(literal("add")
                             .then(argument(DIMENSION, DimensionArgumentType.dimension())
                                     .then(argument(ID,StringArgumentType.string())
+                                            .suggests(new SubwayLineSuggestionProvider())
                                             .then(argument(LABEL,StringArgumentType.string())
                                                     .then(argument(ICON,IntegerArgumentType.integer())
                                                             .then(argument(COLOR, HexColorArgumentType.hexColor())
@@ -70,6 +86,7 @@ public class Subway
                     .then(literal("del")
                             .then(argument(DIMENSION, DimensionArgumentType.dimension())
                                     .then(argument(ID,StringArgumentType.string())
+                                            .suggests(new SubwayLineSuggestionProvider())
                                             .executes(ctx->deleteLine(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID))))))
                     .then(literal("list")
                             .then(argument(DIMENSION, DimensionArgumentType.dimension())
@@ -77,17 +94,20 @@ public class Subway
                     .then(literal("addstation")
                             .then(argument(DIMENSION, DimensionArgumentType.dimension())
                                     .then(argument(ID,StringArgumentType.string())
+                                            .suggests(new SubwayLineSuggestionProvider())
                                             .then(argument(NEW,StringArgumentType.string())
                                                     .then(argument(PREV,StringArgumentType.string())
                                                             .executes(ctx->addStationToLine(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),StringArgumentType.getString(ctx,NEW),StringArgumentType.getString(ctx,PREV))))))))
                     .then(literal("delstation")
                             .then(argument(DIMENSION, DimensionArgumentType.dimension())
                                     .then(argument(ID,StringArgumentType.string())
+                                            .suggests(new SubwayLineSuggestionProvider())
                                             .then(argument(NEW,StringArgumentType.string())
                                                     .executes(ctx->deleteStationFromLine(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),StringArgumentType.getString(ctx,NEW)))))))
                     .then(literal("liststation")
                             .then(argument(DIMENSION, DimensionArgumentType.dimension())
                                     .then(argument(ID,StringArgumentType.string())
+                                            .suggests(new SubwayLineSuggestionProvider())
                                             .executes(ctx->listStationFromLine(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID)))))));
     public static SubwaySystem getSubway(ServerWorld world)
     {
