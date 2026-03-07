@@ -13,22 +13,22 @@ import io.silvicky.elina.common.DistanceCalculator;
 import io.silvicky.elina.webmap.WebMapStorage;
 import io.silvicky.elina.webmap.farm.FarmInfo;
 import io.silvicky.elina.webmap.farm.FarmLookup;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.command.argument.BlockPosArgumentType;
-import net.minecraft.command.argument.DimensionArgumentType;
-import net.minecraft.command.argument.ItemStackArgument;
-import net.minecraft.command.argument.ItemStackArgumentType;
-import net.minecraft.registry.BuiltinRegistries;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
+import net.minecraft.commands.arguments.DimensionArgument;
+import net.minecraft.commands.arguments.item.ItemInput;
+import net.minecraft.commands.arguments.item.ItemArgument;
+import net.minecraft.data.registries.VanillaRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -42,137 +42,137 @@ import static io.silvicky.elina.common.Util.collectionToString;
 import static io.silvicky.elina.common.Util.getPlayerUuid;
 import static io.silvicky.elina.webmap.api.APIEntry.refresh;
 import static java.lang.String.format;
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
 
 public class Farm
 {
     public static final String ITEM = "item";
-    public static final SimpleCommandExceptionType FARM_NOT_FOUND=new SimpleCommandExceptionType(Text.literal("Farm not found."));
-    public static final CommandRegistryAccess commandRegistryAccess=CommandManager.createRegistryAccess(BuiltinRegistries.createWrapperLookup());
-    private static class FarmSuggestionProvider implements SuggestionProvider<ServerCommandSource>
+    public static final SimpleCommandExceptionType FARM_NOT_FOUND=new SimpleCommandExceptionType(Component.literal("Farm not found."));
+    public static final CommandBuildContext commandRegistryAccess= Commands.createValidationContext(VanillaRegistries.createLookup());
+    private static class FarmSuggestionProvider implements SuggestionProvider<CommandSourceStack>
     {
         @Override
-        public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> commandContext, SuggestionsBuilder suggestionsBuilder) throws CommandSyntaxException
+        public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> commandContext, SuggestionsBuilder suggestionsBuilder) throws CommandSyntaxException
         {
-            ServerWorld world=DimensionArgumentType.getDimensionArgument(commandContext,DIMENSION);
+            ServerLevel world= DimensionArgument.getDimension(commandContext,DIMENSION);
             for (String id:getFarmMap(world).keySet()) suggestionsBuilder.suggest(id);
             return suggestionsBuilder.buildFuture();
         }
     }
-    private static class FarmItemSuggestionProvider implements SuggestionProvider<ServerCommandSource>
+    private static class FarmItemSuggestionProvider implements SuggestionProvider<CommandSourceStack>
     {
         @Override
-        public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> commandContext, SuggestionsBuilder suggestionsBuilder) throws CommandSyntaxException
+        public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> commandContext, SuggestionsBuilder suggestionsBuilder) throws CommandSyntaxException
         {
-            ServerWorld world=DimensionArgumentType.getDimensionArgument(commandContext,DIMENSION);
+            ServerLevel world= DimensionArgument.getDimension(commandContext,DIMENSION);
             FarmInfo info=getFarmMap(world).get(StringArgumentType.getString(commandContext,ID));
             if(info==null)return suggestionsBuilder.buildFuture();
             for (Identifier id:info.items()) suggestionsBuilder.suggest(id.toString());
             return suggestionsBuilder.buildFuture();
         }
     }
-    public static LiteralArgumentBuilder<ServerCommandSource> farmArgumentBuilder
+    public static LiteralArgumentBuilder<CommandSourceStack> farmArgumentBuilder
             = literal("farm")
             .then(literal("add")
-                    .then(argument(DIMENSION,new DimensionArgumentType())
+                    .then(argument(DIMENSION,new DimensionArgument())
                             .then(argument(ID, StringArgumentType.string())
                                     .suggests(new FarmSuggestionProvider())
-                                    .then(argument(POS,new BlockPosArgumentType())
+                                    .then(argument(POS,new BlockPosArgument())
                                             .then(argument(LABEL,StringArgumentType.string())
                                                     .then(argument(DETAIL,StringArgumentType.string())
-                                                            .executes(ctx->add(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),BlockPosArgumentType.getBlockPos(ctx,POS),StringArgumentType.getString(ctx,LABEL),StringArgumentType.getString(ctx,DETAIL)))))))))
+                                                            .executes(ctx->add(ctx.getSource(), DimensionArgument.getDimension(ctx,DIMENSION),StringArgumentType.getString(ctx,ID), BlockPosArgument.getBlockPos(ctx,POS),StringArgumentType.getString(ctx,LABEL),StringArgumentType.getString(ctx,DETAIL)))))))))
             .then(literal("del")
-                    .then(argument(DIMENSION,new DimensionArgumentType())
+                    .then(argument(DIMENSION,new DimensionArgument())
                             .then(argument(ID,StringArgumentType.string())
                                     .suggests(new FarmSuggestionProvider())
-                                    .executes(ctx-> delete(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID))))))
+                                    .executes(ctx-> delete(ctx.getSource(), DimensionArgument.getDimension(ctx,DIMENSION),StringArgumentType.getString(ctx,ID))))))
             .then(literal("list")
-                    .then(argument(DIMENSION,new DimensionArgumentType())
-                            .executes(ctx->list(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION)))))
+                    .then(argument(DIMENSION,new DimensionArgument())
+                            .executes(ctx->list(ctx.getSource(), DimensionArgument.getDimension(ctx,DIMENSION)))))
             .then(literal("additem")
-                    .then(argument(DIMENSION,new DimensionArgumentType())
+                    .then(argument(DIMENSION,new DimensionArgument())
                             .then(argument(ID,StringArgumentType.string())
                                     .suggests(new FarmSuggestionProvider())
-                                    .then(argument(ITEM, ItemStackArgumentType.itemStack(commandRegistryAccess))
-                                            .executes(ctx-> addItem(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))))))
+                                    .then(argument(ITEM, ItemArgument.item(commandRegistryAccess))
+                                            .executes(ctx-> addItem(ctx.getSource(), DimensionArgument.getDimension(ctx,DIMENSION),StringArgumentType.getString(ctx,ID), ItemArgument.getItem(ctx,ITEM)))))))
             .then(literal("delitem")
-                    .then(argument(DIMENSION,new DimensionArgumentType())
+                    .then(argument(DIMENSION,new DimensionArgument())
                             .then(argument(ID,StringArgumentType.string())
                                     .suggests(new FarmSuggestionProvider())
-                                    .then(argument(ITEM, ItemStackArgumentType.itemStack(commandRegistryAccess))
+                                    .then(argument(ITEM, ItemArgument.item(commandRegistryAccess))
                                             .suggests(new FarmItemSuggestionProvider())
-                                            .executes(ctx-> deleteItem(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))))))
+                                            .executes(ctx-> deleteItem(ctx.getSource(), DimensionArgument.getDimension(ctx,DIMENSION),StringArgumentType.getString(ctx,ID), ItemArgument.getItem(ctx,ITEM)))))))
             .then(literal("listitem")
-                    .then(argument(DIMENSION,new DimensionArgumentType())
+                    .then(argument(DIMENSION,new DimensionArgument())
                             .then(argument(ID,StringArgumentType.string())
                                     .suggests(new FarmSuggestionProvider())
-                                    .executes(ctx-> listItem(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION),StringArgumentType.getString(ctx,ID))))))
+                                    .executes(ctx-> listItem(ctx.getSource(), DimensionArgument.getDimension(ctx,DIMENSION),StringArgumentType.getString(ctx,ID))))))
             .then(literal("find")
-                    .then(argument(ITEM, ItemStackArgumentType.itemStack(commandRegistryAccess))
-                            .executes(ctx-> find(ctx.getSource(),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))
-                            .then(argument(DIMENSION,new DimensionArgumentType())
-                                    .then(argument(POS,new BlockPosArgumentType())
-                                            .executes(ctx->find(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION), Vec3d.of(BlockPosArgumentType.getBlockPos(ctx,POS)),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))))))
+                    .then(argument(ITEM, ItemArgument.item(commandRegistryAccess))
+                            .executes(ctx-> find(ctx.getSource(), ItemArgument.getItem(ctx,ITEM)))
+                            .then(argument(DIMENSION,new DimensionArgument())
+                                    .then(argument(POS,new BlockPosArgument())
+                                            .executes(ctx->find(ctx.getSource(), DimensionArgument.getDimension(ctx,DIMENSION), Vec3.atLowerCornerOf(BlockPosArgument.getBlockPos(ctx,POS)), ItemArgument.getItem(ctx,ITEM)))))))
             .then(literal("build")
                             .executes(ctx-> build(ctx.getSource()))
-                            .then(argument(DIMENSION,new DimensionArgumentType())
-                                    .then(argument(POS,new BlockPosArgumentType())
-                                            .executes(ctx->build(ctx.getSource(),DimensionArgumentType.getDimensionArgument(ctx,DIMENSION), Vec3d.of(BlockPosArgumentType.getBlockPos(ctx,POS)))))))
+                            .then(argument(DIMENSION,new DimensionArgument())
+                                    .then(argument(POS,new BlockPosArgument())
+                                            .executes(ctx->build(ctx.getSource(), DimensionArgument.getDimension(ctx,DIMENSION), Vec3.atLowerCornerOf(BlockPosArgument.getBlockPos(ctx,POS)))))))
             .then(literal("findadv")
-                    .then(argument(ITEM, ItemStackArgumentType.itemStack(commandRegistryAccess))
-                            .executes(ctx-> findAdvanced(ctx.getSource(),ItemStackArgumentType.getItemStackArgument(ctx,ITEM)))));
-    public static HashMap<String, FarmInfo> getFarmMap(ServerWorld world)
+                    .then(argument(ITEM, ItemArgument.item(commandRegistryAccess))
+                            .executes(ctx-> findAdvanced(ctx.getSource(), ItemArgument.getItem(ctx,ITEM)))));
+    public static HashMap<String, FarmInfo> getFarmMap(ServerLevel world)
     {
         return getServerState(world.getServer()).webMapStorage
-                .computeIfAbsent(world.getRegistryKey().getValue(),i->new WebMapStorage())
+                .computeIfAbsent(world.dimension().identifier(), i->new WebMapStorage())
                 .farms();
     }
-    private static int add(ServerCommandSource source, ServerWorld world, String id, BlockPos pos, String label, String detail)
+    private static int add(CommandSourceStack source, ServerLevel world, String id, BlockPos pos, String label, String detail)
     {
         getFarmMap(world).compute(id,(k,v)->v==null?new FarmInfo(pos,label,detail):new FarmInfo(v.items(),pos,label,detail));
-        source.sendFeedback(()-> Text.literal("Done."),false);
+        source.sendSuccess(()-> Component.literal("Done."),false);
         refresh();
         return Command.SINGLE_SUCCESS;
     }
-    private static int delete(ServerCommandSource source, ServerWorld world, String id)
+    private static int delete(CommandSourceStack source, ServerLevel world, String id)
     {
         getFarmMap(world).remove(id);
-        source.sendFeedback(()-> Text.literal("Done."),false);
+        source.sendSuccess(()-> Component.literal("Done."),false);
         refresh();
         return Command.SINGLE_SUCCESS;
     }
-    private static int list(ServerCommandSource source, ServerWorld world)
+    private static int list(CommandSourceStack source, ServerLevel world)
     {
         for(java.util.Map.Entry<String, FarmInfo> entry: getFarmMap(world).entrySet())
         {
-            source.sendFeedback(()-> Text.literal(format("%s: %s",entry.getKey(),entry.getValue())),false);
+            source.sendSuccess(()-> Component.literal(format("%s: %s",entry.getKey(),entry.getValue())),false);
         }
-        source.sendFeedback(()-> Text.literal("Done."),false);
+        source.sendSuccess(()-> Component.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
-    private static int addItem(ServerCommandSource source, ServerWorld world, String id, ItemStackArgument item) throws CommandSyntaxException
+    private static int addItem(CommandSourceStack source, ServerLevel world, String id, ItemInput item) throws CommandSyntaxException
     {
         FarmInfo info=getFarmMap(world).get(id);
         if(info==null)throw FARM_NOT_FOUND.create();
-        info.items().add(Registries.ITEM.getId(item.getItem()));
-        source.sendFeedback(()-> Text.literal("Done."),false);
+        info.items().add(BuiltInRegistries.ITEM.getKey(item.getItem()));
+        source.sendSuccess(()-> Component.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
-    private static int deleteItem(ServerCommandSource source, ServerWorld world, String id, ItemStackArgument item) throws CommandSyntaxException
+    private static int deleteItem(CommandSourceStack source, ServerLevel world, String id, ItemInput item) throws CommandSyntaxException
     {
         FarmInfo info=getFarmMap(world).get(id);
         if(info==null)throw FARM_NOT_FOUND.create();
-        info.items().remove(Registries.ITEM.getId(item.getItem()));
-        source.sendFeedback(()-> Text.literal("Done."),false);
+        info.items().remove(BuiltInRegistries.ITEM.getKey(item.getItem()));
+        source.sendSuccess(()-> Component.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
-    private static int listItem(ServerCommandSource source, ServerWorld world, String id) throws CommandSyntaxException
+    private static int listItem(CommandSourceStack source, ServerLevel world, String id) throws CommandSyntaxException
     {
         FarmInfo info=getFarmMap(world).get(id);
         if(info==null)throw FARM_NOT_FOUND.create();
-        source.sendFeedback(()-> Text.literal(collectionToString(info.items())),false);
-        source.sendFeedback(()-> Text.literal("Done."),false);
+        source.sendSuccess(()-> Component.literal(collectionToString(info.items())),false);
+        source.sendSuccess(()-> Component.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
     public record FindResult(double distance, Identifier dimension, String id, FarmInfo info) implements Comparable<FindResult>
@@ -188,11 +188,11 @@ public class Farm
             return Double.compare(distance,o.distance);
         }
     }
-    private static int find(ServerCommandSource source, ItemStackArgument item)
+    private static int find(CommandSourceStack source, ItemInput item)
     {
-        return find(source, source.getWorld(), source.getPosition(), item);
+        return find(source, source.getLevel(), source.getPosition(), item);
     }
-    private static int find(ServerCommandSource source, ServerWorld serverWorld, Vec3d pos, ItemStackArgument item)
+    private static int find(CommandSourceStack source, ServerLevel serverWorld, Vec3 pos, ItemInput item)
     {
         List<FindResult> farms=new ArrayList<>();
         DistanceCalculator distanceCalculator=new DistanceCalculator(serverWorld,pos);
@@ -200,10 +200,10 @@ public class Farm
         {
             for(java.util.Map.Entry<String, FarmInfo> j:i.getValue().farms().entrySet())
             {
-                if(!j.getValue().items().contains(Registries.ITEM.getId(item.getItem())))continue;
+                if(!j.getValue().items().contains(BuiltInRegistries.ITEM.getKey(item.getItem())))continue;
                 Optional<Double> dis=distanceCalculator.calculateDistance(
-                        source.getServer().getWorld(RegistryKey.of(RegistryKeys.WORLD,i.getKey())),
-                        j.getValue().pos().toCenterPos());
+                        source.getServer().getLevel(ResourceKey.create(Registries.DIMENSION,i.getKey())),
+                        j.getValue().pos().getCenter());
                 if(dis.isEmpty())continue;
                 farms.add(new FindResult(
                         dis.get(),
@@ -212,20 +212,20 @@ public class Farm
                         j.getValue()));
             }
         }
-        if(farms.isEmpty())source.sendFeedback(()-> Text.literal("Not found."),false);
+        if(farms.isEmpty())source.sendSuccess(()-> Component.literal("Not found."),false);
         else
         {
             farms.sort(Comparator.naturalOrder());
             FindResult i=farms.getFirst();
-            source.sendFeedback(() -> Text.literal(i.toString()), false);
+            source.sendSuccess(() -> Component.literal(i.toString()), false);
         }
         return Command.SINGLE_SUCCESS;
     }
-    private static int build(ServerCommandSource source)
+    private static int build(CommandSourceStack source)
     {
-        return build(source, source.getWorld(), source.getPosition());
+        return build(source, source.getLevel(), source.getPosition());
     }
-    private static int build(ServerCommandSource source, ServerWorld serverWorld, Vec3d pos)
+    private static int build(CommandSourceStack source, ServerLevel serverWorld, Vec3 pos)
     {
         List<FindResult> farms=new ArrayList<>();
         DistanceCalculator distanceCalculator=new DistanceCalculator(serverWorld,pos);
@@ -234,8 +234,8 @@ public class Farm
             for(java.util.Map.Entry<String, FarmInfo> j:i.getValue().farms().entrySet())
             {
                 Optional<Double> dis=distanceCalculator.calculateDistance(
-                        source.getServer().getWorld(RegistryKey.of(RegistryKeys.WORLD,i.getKey())),
-                        j.getValue().pos().toCenterPos());
+                        source.getServer().getLevel(ResourceKey.create(Registries.DIMENSION,i.getKey())),
+                        j.getValue().pos().getCenter());
                 if(dis.isEmpty())continue;
                 farms.add(new FindResult(
                         dis.get(),
@@ -245,13 +245,13 @@ public class Farm
             }
         }
         FarmLookup.build(getPlayerUuid(source.getPlayer()),farms);
-        source.sendFeedback(()-> Text.literal("Done."),false);
+        source.sendSuccess(()-> Component.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
-    private static int findAdvanced(ServerCommandSource source, ItemStackArgument item) throws CommandSyntaxException
+    private static int findAdvanced(CommandSourceStack source, ItemInput item) throws CommandSyntaxException
     {
-        FarmLookup.lookup(source,Registries.ITEM.getEntry(item.getItem()));
-        source.sendFeedback(()-> Text.literal("Done."),false);
+        FarmLookup.lookup(source, BuiltInRegistries.ITEM.wrapAsHolder(item.getItem()));
+        source.sendSuccess(()-> Component.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
 }

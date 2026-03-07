@@ -1,10 +1,10 @@
 package io.silvicky.elina.webmap;
 
 import io.silvicky.elina.Elina;
-import net.minecraft.block.MapColor;
-import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.item.map.MapState;
-import net.minecraft.world.IdCountsState;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
+import net.minecraft.world.level.saveddata.maps.MapIndex;
 
 import java.awt.image.BufferedImage;
 
@@ -14,9 +14,9 @@ public class MapRender
     public static final int step=8;
     public static BufferedImage render(int id)
     {
-        int maxId=Elina.server.getOverworld().getPersistentStateManager().getOrCreate(IdCountsState.STATE_TYPE).map;
+        int maxId=Elina.server.overworld().getDataStorage().computeIfAbsent(MapIndex.TYPE).lastMapId;
         if(id<0||id>maxId)return null;
-        MapState mapState= Elina.server.getOverworld().getPersistentStateManager().get(MapState.createStateType(new MapIdComponent(id)));
+        MapItemSavedData mapState= Elina.server.overworld().getDataStorage().get(MapItemSavedData.type(new MapId(id)));
         if(mapState==null)return null;
         if(!mapState.locked)return null;
         BufferedImage ret=new BufferedImage(width,width,BufferedImage.TYPE_INT_RGB);
@@ -24,7 +24,7 @@ public class MapRender
         {
             for(int y=0;y<width;y++)
             {
-                ret.setRGB(x,y, MapColor.getRenderColor(mapState.colors[x*step+y*step*128]));
+                ret.setRGB(x,y, MapColor.getColorFromPackedId(mapState.colors[x*step+y*step*128]));
                 /*
                 for(int x1=x*step;x1<x*step+step;x1++)
                 {

@@ -15,11 +15,11 @@ import io.silvicky.elina.webmap.farm.FarmInfo;
 import io.silvicky.elina.webmap.subway.SubwayLine;
 import io.silvicky.elina.webmap.subway.SubwayStation;
 import io.silvicky.elina.webmap.subway.SubwaySystem;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.resources.Identifier;
+import net.minecraft.core.BlockPos;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -70,7 +70,7 @@ class BlueMap
     {
         return Vector3d.from(pos.getX(), pos.getY(), pos.getZ());
     }
-    private static LineMarker fromBlockPoss(BlockPos a,BlockPos b,int color)
+    private static LineMarker fromBlockPoss(BlockPos a, BlockPos b, int color)
     {
         return LineMarker.builder()
                 .label("")
@@ -162,7 +162,7 @@ class BlueMap
         BlueMapAPI api= apiOpt.get();
         for(Map.Entry<Identifier, WebMapStorage> entry:getServerState(server).webMapStorage.entrySet())
         {
-            ServerWorld world=server.getWorld(RegistryKey.of(RegistryKeys.WORLD,entry.getKey()));
+            ServerLevel world=server.getLevel(ResourceKey.create(Registries.DIMENSION,entry.getKey()));
             WebMapStorage storage=entry.getValue();
             Map<String, MarkerSet> markerSets=new HashMap<>();
             MarkerSet subway=new MarkerSet("Subway");

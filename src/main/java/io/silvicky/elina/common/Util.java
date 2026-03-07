@@ -1,8 +1,8 @@
 package io.silvicky.elina.common;
 
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.resources.Identifier;
 
 import java.util.Collection;
 
@@ -38,14 +38,14 @@ public class Util
             if(id.endsWith(OVERWORLD))return OVERWORLD_TYPE;
             return SINGLET;
         }
-        public static DimensionType getDimensionType(ServerWorld world)
+        public static DimensionType getDimensionType(ServerLevel world)
         {
-            return getDimensionType(world.getRegistryKey().getValue().getPath());
+            return getDimensionType(world.dimension().identifier().getPath());
         }
     }
-    public static Identifier getDimensionId(ServerWorld world, DimensionType type)
+    public static Identifier getDimensionId(ServerLevel world, DimensionType type)
     {
-        return getDimensionId(world.getRegistryKey().getValue(),type);
+        return getDimensionId(world.dimension().identifier(),type);
     }
 
     public static String getDimensionId(String id, DimensionType type)
@@ -57,11 +57,11 @@ public class Util
     }
     public static Identifier getDimensionId(Identifier id, DimensionType type)
     {
-        return Identifier.of(id.getNamespace(),getDimensionId(id.getPath(),type));
+        return Identifier.fromNamespaceAndPath(id.getNamespace(),getDimensionId(id.getPath(),type));
     }
-    public static String getPlayerUuid(ServerPlayerEntity player)
+    public static String getPlayerUuid(ServerPlayer player)
     {
         if(player==null)return "";
-        return player.getUuidAsString();
+        return player.getStringUUID();
     }
 }

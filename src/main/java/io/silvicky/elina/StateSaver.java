@@ -3,22 +3,23 @@ package io.silvicky.elina;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.silvicky.elina.webmap.WebMapStorage;
-import net.minecraft.datafixer.DataFixTypes;
+import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.PersistentState;
-import net.minecraft.world.PersistentStateManager;
-import net.minecraft.world.PersistentStateType;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.resources.Identifier;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.storage.DimensionDataStorage;
+import net.minecraft.world.level.saveddata.SavedDataType;
+import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
 
-public class StateSaver extends PersistentState {
+public class StateSaver extends SavedData
+{
     public final HashMap<Identifier, HashMap<Identifier, HashSet<BlockPos> > > visitedStructure;
     public final HashMap<Identifier, WebMapStorage> webMapStorage;
     public static final Codec<StateSaver> CODEC= RecordCodecBuilder.create((instance)->
@@ -34,7 +35,7 @@ public class StateSaver extends PersistentState {
         this.webMapStorage = webMapStorage;
     }
     public StateSaver(){this(new HashMap<>(),new HashMap<>());}
-    private static final PersistentStateType<StateSaver> type = new PersistentStateType<>(
+    private static final SavedDataType<StateSaver> type = new SavedDataType<>(
             Elina.MOD_ID,
             StateSaver::new,
             CODEC,
@@ -42,13 +43,13 @@ public class StateSaver extends PersistentState {
     );
 
     public static StateSaver getServerState(MinecraftServer server) {
-        return getServerState(Objects.requireNonNull(server.getWorld(World.OVERWORLD)));
+        return getServerState(Objects.requireNonNull(server.getLevel(Level.OVERWORLD)));
     }
     //DO NOT USE THIS UNLESS DURING CONSTRUCTION OF OVERWORLD
-    public static StateSaver getServerState(ServerWorld world) {
-        PersistentStateManager persistentStateManager = world.getPersistentStateManager();
-        StateSaver state = persistentStateManager.getOrCreate(type);
-        state.markDirty();
+    public static StateSaver getServerState(ServerLevel world) {
+        DimensionDataStorage persistentStateManager = world.getDataStorage();
+        StateSaver state = persistentStateManager.computeIfAbsent(type);
+        state.setDirty();
         return state;
     }
 }

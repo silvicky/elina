@@ -2,8 +2,8 @@ package io.silvicky.elina.webmap.farm;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.resources.Identifier;
+import net.minecraft.core.BlockPos;
 
 import java.util.ArrayList;
 import java.util.HashSet;

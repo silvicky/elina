@@ -2,7 +2,7 @@ package io.silvicky.elina.webmap.entities;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 
 import static java.lang.String.format;
 
