@@ -26,6 +26,14 @@ In the future more WebMap variants might be added.
 
 This is the subway system of the *map* part, and you can draw custom lines and stations.
 
+### *farm*
+
+A tool for quick item farming lookup, which supports not only directly generated item, but also crafted ones.
+
+When all the source materials are available, an approximate "crafting pathway" can be calculated.
+
+This is really my favorite part of this mod, as it makes getting started in a new server or world very simple.
+
 ## About the name
 
 "Elina" could be a single name or concatenation of something, or nothing.
