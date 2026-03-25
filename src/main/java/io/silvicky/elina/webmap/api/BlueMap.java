@@ -36,7 +36,7 @@ class BlueMap
     private static final String defaultIcon="assets/poi.svg";
     static void register()
     {
-        BlueMapAPI.onEnable(api-> refresh());
+        BlueMapAPI.onEnable(_ -> refresh());
     }
     private static POIMarker fromPoint(BlueMapAPI api,Point point)
     {

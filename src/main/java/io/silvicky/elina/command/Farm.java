@@ -30,6 +30,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -125,12 +126,12 @@ public class Farm
     public static HashMap<String, FarmInfo> getFarmMap(ServerLevel world)
     {
         return getServerState(world.getServer()).webMapStorage
-                .computeIfAbsent(world.dimension().identifier(), i->new WebMapStorage())
+                .computeIfAbsent(world.dimension().identifier(), _ ->new WebMapStorage())
                 .farms();
     }
     private static int add(CommandSourceStack source, ServerLevel world, String id, BlockPos pos, String label, String detail)
     {
-        getFarmMap(world).compute(id,(k,v)->v==null?new FarmInfo(pos,label,detail):new FarmInfo(v.items(),pos,label,detail));
+        getFarmMap(world).compute(id,(_, v)->v==null?new FarmInfo(pos,label,detail):new FarmInfo(v.items(),pos,label,detail));
         source.sendSuccess(()-> Component.literal("Done."),false);
         refresh();
         return Command.SINGLE_SUCCESS;
@@ -155,7 +156,7 @@ public class Farm
     {
         FarmInfo info=getFarmMap(world).get(id);
         if(info==null)throw FARM_NOT_FOUND.create();
-        info.items().add(BuiltInRegistries.ITEM.getKey(item.getItem()));
+        info.items().add(BuiltInRegistries.ITEM.getKey(item.item().value()));
         source.sendSuccess(()-> Component.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
@@ -163,7 +164,7 @@ public class Farm
     {
         FarmInfo info=getFarmMap(world).get(id);
         if(info==null)throw FARM_NOT_FOUND.create();
-        info.items().remove(BuiltInRegistries.ITEM.getKey(item.getItem()));
+        info.items().remove(BuiltInRegistries.ITEM.getKey(item.item().value()));
         source.sendSuccess(()-> Component.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }
@@ -178,7 +179,7 @@ public class Farm
     public record FindResult(double distance, Identifier dimension, String id, FarmInfo info) implements Comparable<FindResult>
     {
         @Override
-        public String toString()
+        public @NonNull String toString()
         {
             return format("%s: %s, %s, %dm",id,info,dimension,(long)distance);
         }
@@ -200,7 +201,7 @@ public class Farm
         {
             for(java.util.Map.Entry<String, FarmInfo> j:i.getValue().farms().entrySet())
             {
-                if(!j.getValue().items().contains(BuiltInRegistries.ITEM.getKey(item.getItem())))continue;
+                if(!j.getValue().items().contains(BuiltInRegistries.ITEM.getKey(item.item().value())))continue;
                 Optional<Double> dis=distanceCalculator.calculateDistance(
                         source.getServer().getLevel(ResourceKey.create(Registries.DIMENSION,i.getKey())),
                         j.getValue().pos().getCenter());
@@ -250,7 +251,7 @@ public class Farm
     }
     private static int findAdvanced(CommandSourceStack source, ItemInput item) throws CommandSyntaxException
     {
-        FarmLookup.lookup(source, BuiltInRegistries.ITEM.wrapAsHolder(item.getItem()));
+        FarmLookup.lookup(source, BuiltInRegistries.ITEM.wrapAsHolder(item.item().value()));
         source.sendSuccess(()-> Component.literal("Done."),false);
         return Command.SINGLE_SUCCESS;
     }

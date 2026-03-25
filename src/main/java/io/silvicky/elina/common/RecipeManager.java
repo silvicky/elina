@@ -23,9 +23,9 @@ public class RecipeManager
     {
         switch (recipe)
         {
-            case ShapedRecipe shapedRecipe -> recipes.put(id,new Tuple<>(shapedRecipe.placementInfo().ingredients(), shapedRecipe.result.getItemHolder()));
-            case ShapelessRecipe shapelessRecipe -> recipes.put(id,new Tuple<>(shapelessRecipe.placementInfo().ingredients(), shapelessRecipe.result.getItemHolder()));
-            case SingleItemRecipe singleStackRecipe -> recipes.put(id,new Tuple<>(List.of(singleStackRecipe.input()),singleStackRecipe.result.getItemHolder()));
+            case ShapedRecipe shapedRecipe -> recipes.put(id,new Tuple<>(shapedRecipe.placementInfo().ingredients(), shapedRecipe.result.create().getItem().builtInRegistryHolder()));
+            case ShapelessRecipe shapelessRecipe -> recipes.put(id,new Tuple<>(shapelessRecipe.placementInfo().ingredients(), shapelessRecipe.result.create().getItem().builtInRegistryHolder()));
+            case SingleItemRecipe singleStackRecipe -> recipes.put(id,new Tuple<>(List.of(singleStackRecipe.input()),singleStackRecipe.result.create().getItem().builtInRegistryHolder()));
             default -> {}
         }
         //TODO more types
@@ -43,7 +43,7 @@ public class RecipeManager
             {
                 for(Holder<Item> item:ingredient.values)
                 {
-                    recipesWithSource.computeIfAbsent(item,v->new HashSet<>()).add(i.getKey());
+                    recipesWithSource.computeIfAbsent(item, _ ->new HashSet<>()).add(i.getKey());
                 }
             }
         }

@@ -12,7 +12,7 @@ public class Elina implements ModInitializer {
 	// This logger is used to write text to the console and the log file.
 	// It is considered best practice to use your mod id as the logger's name.
 	// That way, it's clear which mod wrote info, warnings, and errors.
-	public static final String MOD_ID = "Elina";
+	public static final String MOD_ID = "elina";
 	public static MinecraftServer server=null;
     public static final Logger LOGGER = LoggerFactory.getLogger("elina");
 	@Override
@@ -21,7 +21,7 @@ public class Elina implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 		LOGGER.info("Loading Elina...");
-		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> CommandRoot.register(dispatcher));
+		CommandRegistrationCallback.EVENT.register((dispatcher, _, _) -> CommandRoot.register(dispatcher));
 		APIEntry.register();
 	}
 }
