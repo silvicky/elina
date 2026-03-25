@@ -14,9 +14,9 @@ public class MapRender
     public static final int step=8;
     public static BufferedImage render(int id)
     {
-        int maxId=Elina.server.overworld().getDataStorage().computeIfAbsent(MapIndex.TYPE).lastMapId;
+        int maxId=Elina.server.getDataStorage().computeIfAbsent(MapIndex.TYPE).lastMapId;
         if(id<0||id>maxId)return null;
-        MapItemSavedData mapState= Elina.server.overworld().getDataStorage().get(MapItemSavedData.type(new MapId(id)));
+        MapItemSavedData mapState= Elina.server.getDataStorage().get(MapItemSavedData.type(new MapId(id)));
         if(mapState==null)return null;
         if(!mapState.locked)return null;
         BufferedImage ret=new BufferedImage(width,width,BufferedImage.TYPE_INT_RGB);
