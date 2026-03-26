@@ -5,12 +5,10 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.silvicky.elina.webmap.WebMapStorage;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.resources.Identifier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.SavedDataStorage;
 
 import java.nio.file.Files;
@@ -19,10 +17,10 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Objects;
 
 public class StateSaver extends SavedData
 {
+    private static boolean checkMigrate=true;
     private static final Identifier id=Identifier.fromNamespaceAndPath("silvicky",Elina.MOD_ID);
     public final HashMap<Identifier, HashMap<Identifier, HashSet<BlockPos> > > visitedStructure;
     public final HashMap<Identifier, WebMapStorage> webMapStorage;
@@ -61,7 +59,11 @@ public class StateSaver extends SavedData
         }
     }
     public static StateSaver getServerState(MinecraftServer server) {
-        migrate(server);
+        if(checkMigrate)
+        {
+            migrate(server);
+            checkMigrate=false;
+        }
         SavedDataStorage persistentStateManager = server.getDataStorage();
         StateSaver state = persistentStateManager.computeIfAbsent(type);
         state.setDirty();
