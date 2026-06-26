@@ -204,7 +204,7 @@ public class Farm
                 if(!j.getValue().items().contains(BuiltInRegistries.ITEM.getKey(item.item().value())))continue;
                 Optional<Double> dis=distanceCalculator.calculateDistance(
                         source.getServer().getLevel(ResourceKey.create(Registries.DIMENSION,i.getKey())),
-                        j.getValue().pos().getCenter());
+                        Vec3.atCenterOf(j.getValue().pos()));
                 if(dis.isEmpty())continue;
                 farms.add(new FindResult(
                         dis.get(),
@@ -236,7 +236,7 @@ public class Farm
             {
                 Optional<Double> dis=distanceCalculator.calculateDistance(
                         source.getServer().getLevel(ResourceKey.create(Registries.DIMENSION,i.getKey())),
-                        j.getValue().pos().getCenter());
+                        Vec3.atCenterOf(j.getValue().pos()));
                 if(dis.isEmpty())continue;
                 farms.add(new FindResult(
                         dis.get(),

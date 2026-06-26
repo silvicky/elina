@@ -3,6 +3,7 @@ package io.silvicky.elina.webmap.farm;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
 import io.silvicky.elina.Elina;
 import io.silvicky.elina.command.Farm;
 import io.silvicky.elina.common.RecipeManager;
@@ -15,7 +16,6 @@ import net.minecraft.core.Holder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.Tuple;
 
 import java.util.*;
 
@@ -30,7 +30,7 @@ public class FarmLookup
 {
     private final Map<Holder<Item>,Double> itemCurrentCost=new HashMap<>();
     private final Map<Holder<Item>, Either<Farm.FindResult,Set<Holder<Item>>>> itemCurrentSolution=new HashMap<>();
-    private final PriorityQueue<Tuple<Double, Holder<Item>>> pq=new PriorityQueue<>(Comparator.comparingDouble(Tuple::getA));
+    private final PriorityQueue<Pair<Double, Holder<Item>>> pq=new PriorityQueue<>(Comparator.comparingDouble(Pair::getFirst));
     public static final SimpleCommandExceptionType FARM_LOOKUP_NOT_FOUND=new SimpleCommandExceptionType(Component.literal("Please build first!"));
     private static class RecipeStatus
     {
@@ -69,9 +69,9 @@ public class FarmLookup
     private final Map<Identifier, RecipeStatus> recipeStatus=new HashMap<>();
     private void build(List<Farm.FindResult> farms)
     {
-        for(Map.Entry<Identifier, Tuple<List<Ingredient>, Holder<Item>>> i:recipes.entrySet())
+        for(Map.Entry<Identifier, Pair<List<Ingredient>, Holder<Item>>> i:recipes.entrySet())
         {
-            recipeStatus.put(i.getKey(),new RecipeStatus(i.getValue().getA(),i.getValue().getB()));
+            recipeStatus.put(i.getKey(),new RecipeStatus(i.getValue().getFirst(),i.getValue().getSecond()));
         }
         for(Farm.FindResult findResult:farms)
         {
@@ -87,16 +87,16 @@ public class FarmLookup
         }
         for(Map.Entry<Holder<Item>, Double> i:itemCurrentCost.entrySet())
         {
-            pq.add(new Tuple<>(i.getValue(),i.getKey()));
+            pq.add(new Pair<>(i.getValue(),i.getKey()));
         }
         while(!pq.isEmpty())
         {
-            Tuple<Double, Holder<Item>> i=pq.poll();
-            if(itemCurrentCost.get(i.getB())<i.getA())continue;
-            for(Identifier recipe:recipesWithSource.getOrDefault(i.getB(),new HashSet<>()))
+            Pair<Double, Holder<Item>> i=pq.poll();
+            if(itemCurrentCost.get(i.getSecond())<i.getFirst())continue;
+            for(Identifier recipe:recipesWithSource.getOrDefault(i.getSecond(),new HashSet<>()))
             {
                 RecipeStatus status=recipeStatus.get(recipe);
-                if(status.addItem(i.getB(),i.getA())&&status.isDone())
+                if(status.addItem(i.getSecond(),i.getFirst())&&status.isDone())
                 {
                     double cost=status.getCost();
                     Holder<Item> target=status.getTarget();
@@ -104,7 +104,7 @@ public class FarmLookup
                     {
                         itemCurrentCost.put(target, cost);
                         itemCurrentSolution.put(target,Either.right(status.getResolvedSources()));
-                        pq.add(new Tuple<>(cost,target));
+                        pq.add(new Pair<>(cost,target));
                     }
                 }
             }

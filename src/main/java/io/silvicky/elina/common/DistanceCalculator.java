@@ -36,7 +36,7 @@ public class DistanceCalculator
     private final Util.DimensionType sourceType;
     private final double scale;
     private final double strongholdDistance;
-    private final Vec3 platform= ServerLevel.END_SPAWN_POINT.getCenter().with(Direction.Axis.Y,0);
+    private final Vec3 platform= Vec3.atCenterOf(ServerLevel.END_SPAWN_POINT).with(Direction.Axis.Y,0);
     private final Vec3 returnGate= Vec3.ZERO;
     private final Vec3 spawn;
     public DistanceCalculator(ServerLevel sourceWorld, Vec3 sourcePos)
@@ -65,20 +65,20 @@ public class DistanceCalculator
         Pair<BlockPos, Holder<Structure>> pair1 =
                 overworld.getChunkSource().getGenerator()
                         .findNearestMapStructure(overworld, stronghold, BlockPos.containing(sourcePos), 100, false);
-        if(pair1!=null)d=Math.min(d,sourcePos.distanceTo(pair1.getFirst().getBottomCenter().with(Direction.Axis.Y,0))*scale);
+        if(pair1!=null)d=Math.min(d,sourcePos.distanceTo(Vec3.atBottomCenterOf(pair1.getFirst()).with(Direction.Axis.Y,0))*scale);
         Pair<BlockPos, Holder<Structure>> pair2 =
                 nether.getChunkSource().getGenerator()
                         .findNearestMapStructure(nether, stronghold, BlockPos.containing(sourcePos.scale(scale)), 100, false);
-        if(pair2!=null)d=Math.min(d,sourcePos.distanceTo(pair2.getFirst().getBottomCenter().with(Direction.Axis.Y,0)));
+        if(pair2!=null)d=Math.min(d,sourcePos.distanceTo(Vec3.atBottomCenterOf(pair2.getFirst()).with(Direction.Axis.Y,0)));
         strongholdDistance=d;
         LevelData.RespawnData spawnPoint=overworld.getRespawnData();
         if(Util.DimensionType.getDimensionType(spawnPoint.dimension().identifier().toString())== Util.DimensionType.OVERWORLD_TYPE)
         {
-            spawn=spawnPoint.pos().getCenter().with(Direction.Axis.Y,0);
+            spawn=Vec3.atCenterOf(spawnPoint.pos()).with(Direction.Axis.Y,0);
         }
         else
         {
-            spawn=spawnPoint.pos().getCenter().with(Direction.Axis.Y,0).scale(1/scale);
+            spawn=Vec3.atCenterOf(spawnPoint.pos()).with(Direction.Axis.Y,0).scale(1/scale);
         }
     }
     public Optional<Double> calculateDistance(ServerLevel targetWorld, Vec3 targetPos)
