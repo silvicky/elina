@@ -1,5 +1,7 @@
 # Elina
 
+[中文](README_CN.md)
+
 ## Overview
 
 A collection of some Minecraft utilities, with minimal change to vanilla gameplay, as usual.

@@ -1,5 +1,7 @@
 # Elina
 
+[English](README.md)
+
 ## 简介
 
 Minecraft 工具集，仍然基本不影响原版游戏内容。
