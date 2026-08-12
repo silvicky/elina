@@ -7,6 +7,7 @@ import net.minecraft.server.permissions.PermissionLevel;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 
+import static io.silvicky.elina.command.FakeWhiteList.fwlArgumentBuilder;
 import static io.silvicky.elina.command.Farm.farmArgumentBuilder;
 import static io.silvicky.elina.command.Locate.locateArgumentBuilder;
 import static io.silvicky.elina.command.Map.mapArgumentBuilder;
@@ -24,7 +25,8 @@ public class CommandRoot
                         .then(locateArgumentBuilder)
                         .then(mapArgumentBuilder)
                         .then(subwayArgumentBuilder)
-                        .then(farmArgumentBuilder));
+                        .then(farmArgumentBuilder)
+                        .then(fwlArgumentBuilder));
     }
     private static int help(CommandSourceStack source)
     {

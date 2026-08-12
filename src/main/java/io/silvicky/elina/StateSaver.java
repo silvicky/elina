@@ -24,19 +24,22 @@ public class StateSaver extends SavedData
     private static final Identifier id=Identifier.fromNamespaceAndPath("silvicky",Elina.MOD_ID);
     public final HashMap<Identifier, HashMap<Identifier, HashSet<BlockPos> > > visitedStructure;
     public final HashMap<Identifier, WebMapStorage> webMapStorage;
+    public final HashMap<String, HashSet<String>> fwlKeys;
     public static final Codec<StateSaver> CODEC= RecordCodecBuilder.create((instance)->
             instance.group
                     (
                             Codec.unboundedMap(Identifier.CODEC,Codec.unboundedMap(Identifier.CODEC,Codec.list(BlockPos.CODEC).xmap(HashSet::new, ArrayList::new)).xmap(HashMap::new, map->map)).xmap(HashMap::new, map->map).fieldOf("structure").orElse(new HashMap<>()).forGetter(stateSaver -> stateSaver.visitedStructure),
-                            Codec.unboundedMap(Identifier.CODEC,WebMapStorage.CODEC).xmap(HashMap::new, map->map).fieldOf("map").orElse(new HashMap<>()).forGetter(stateSaver -> stateSaver.webMapStorage)
-                    ).apply(instance,StateSaver::new));
+                            Codec.unboundedMap(Identifier.CODEC,WebMapStorage.CODEC).xmap(HashMap::new, map->map).fieldOf("map").orElse(new HashMap<>()).forGetter(stateSaver -> stateSaver.webMapStorage),
+                            Codec.unboundedMap(Codec.STRING,Codec.list(Codec.STRING).xmap(HashSet::new, ArrayList::new)).xmap(HashMap::new, map->map).fieldOf("fwl").orElse(new HashMap<>()).forGetter(stateSaver -> stateSaver.fwlKeys)
+                    ).apply(instance, StateSaver::new));
     public StateSaver(HashMap<Identifier, HashMap<Identifier, HashSet<BlockPos> > > visitedStructure
-            , HashMap<Identifier, WebMapStorage> webMapStorage)
+            , HashMap<Identifier, WebMapStorage> webMapStorage, HashMap<String, HashSet<String>> fwlKeys)
     {
         this.visitedStructure=visitedStructure;
         this.webMapStorage = webMapStorage;
+        this.fwlKeys = fwlKeys;
     }
-    public StateSaver(){this(new HashMap<>(),new HashMap<>());}
+    public StateSaver(){this(new HashMap<>(),new HashMap<>(), new HashMap<>());}
     private static final SavedDataType<StateSaver> type = new SavedDataType<>(
             id,
             StateSaver::new,
